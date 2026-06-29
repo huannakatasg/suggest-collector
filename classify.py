@@ -9,7 +9,7 @@ def is_english(s: str) -> bool:
         return False
     if re.search(r"[àáảãạăắằẳẵặâấầẩẫậđèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵ]", t):
         return False
-    return (" " in t) or bool(re.search(r"(rent|lease|lunch|catering|apartment|office|hotel|resort)", t))
+    return (" " in t) or bool(re.search(r"(rent|lease|lunch|catering|apartment|office|hotel|resort|water|delivery|supply|mineral|bottle|corporate)", t))
 
 
 def classify_food(s: str) -> str:
@@ -77,6 +77,39 @@ def classify_hotel(s: str) -> str:
         return "Local"
     return "Transactional"
 
+def water_is_negative(s: str) -> bool:
+    t = (s or "").lower()
+    return bool(re.search(
+        r"(nước hoa|nước mắm|nước tương|nước giặt|nước rửa|nước lau|nước tẩy|"
+        r"nước thải|nước sinh hoạt|nước cất|nước muối|nước tiểu|nước ối|"
+        r"máy lọc nước|lọc nước|hồ cá|bể cá|nước giải khát|trà sữa|bia|rượu|"
+        r"nước ép|sinh tố|nước ngọt|coca|pepsi|7up|sting)",
+        t,
+    ))
 
-CLASSIFIERS = {"food": classify_food, "realestate": classify_realestate, "hotel": classify_hotel}
-NEGATIVE = {"realestate": re_is_negative}
+
+def classify_water(s: str) -> str:
+    t = (s or "").lower()
+    if is_english(t):
+        return "English"
+    if re.search(r"(lavie|la vie|vĩnh hảo|vinh hao|ion life|aquafina|bidrico|sapuwa|dasani|dasan|satori)", t):
+        return "Brand"
+    if re.search(r"(cây nước|nóng lạnh|nong lanh|bình úp|binh up|cây nóng lạnh)", t):
+        return "Equipment"
+    if re.search(r"(19l|20l|bình|binh|đóng bình|dong binh|bình nước|water bottle 20l)", t):
+        return "Bottle20L"
+    if re.search(r"(chai|thùng|thung|350ml|500ml|phòng họp|phong hop|meeting|hội nghị|hoi nghi|tiếp khách|tiep khach)", t):
+        return "Meeting"
+    if re.search(r"(giá|gia|sỉ|si|chiết khấu|chiet khau|công nợ|cong no|vat|hóa đơn|hoa don|bao nhiêu|bao nhieu|rẻ|re|price|invoice)", t):
+        return "Pricing"
+    if re.search(r"(quận|phường|huyện|gần|khu |đường |district|thao dien|phu my hung|k300|tân bình|tan binh|bình thạnh|binh thanh)", t):
+        return "Local"
+    if re.search(r"(đổi|doi|giao|gọi|goi|đại lý|dai ly|delivery|supply|cung cấp|cung cap)", t):
+        return "Action"
+    if re.search(r"(nước|nuoc|water|mineral)", t):
+        return "Action"
+    return "Other"
+
+
+CLASSIFIERS = {"food": classify_food, "realestate": classify_realestate, "hotel": classify_hotel, "water": classify_water}
+NEGATIVE = {"realestate": re_is_negative, "water": water_is_negative}

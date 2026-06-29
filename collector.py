@@ -8,7 +8,7 @@ ENV bắt buộc (đặt ở GitHub Secrets):
   SUPABASE_URL                 vd https://xxxx.supabase.co
   SUPABASE_SERVICE_ROLE_KEY    service_role key (KHÔNG public)
 ENV tùy chọn:
-  INDUSTRIES=food,realestate,hotel   (mặc định cả 3)
+  INDUSTRIES=food,realestate,hotel,water   (mặc định cả 4)
   DELAY=0.6                            giây giữa các request (an toàn)
   MAX_SUGGEST=10
 """
@@ -24,7 +24,7 @@ import classify
 
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-INDUSTRIES = [x.strip() for x in os.environ.get("INDUSTRIES", "food,realestate,hotel").split(",") if x.strip()]
+INDUSTRIES = [x.strip() for x in os.environ.get("INDUSTRIES", "food,realestate,hotel,water").split(",") if x.strip()]
 DELAY = float(os.environ.get("DELAY", "0.6"))
 MAX_SUGGEST = int(os.environ.get("MAX_SUGGEST", "10"))
 HL, GL = "vi", "vn"

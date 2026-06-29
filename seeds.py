@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Ma trận hoán vị seed cho 3 ngành — bung tới ~3.000 seed/ngành.
+"""Ma trận hoán vị seed cho 4 ngành — bung tới ~3.000 seed/ngành.
 Suggest sẽ tự bung tiếp tổ hợp con, nên đây đã là độ phủ rất sâu.
 Mỗi seed = dict(keyword, nhom). Trả về list đã dedupe."""
 
@@ -12,6 +12,8 @@ STREETS = ["nguyễn huệ","lê lợi","điện biên phủ","cách mạng thá
            "phạm văn đồng","quang trung","lê văn việt"]
 CLUSTERS = ["thảo điền","phú mỹ hưng","an phú","sala","vinhomes grand park","vinhomes central park",
             "masteri","landmark 81","khu công nghệ cao","khu chế xuất tân thuận"]
+WATER_CLUSTERS = ["k300","etower","republic plaza","pearl plaza","landmark 81","saigon pearl",
+                  "thảo điền","phú mỹ hưng","khu chế xuất tân thuận","khu công nghệ cao"]
 EN_LOC = ["district 1","district 2","district 3","district 4","district 7","district 10","binh thanh",
           "tan binh","phu nhuan","go vap","thu duc","thao dien","phu my hung","an phu","ho chi minh","saigon"]
 
@@ -52,6 +54,51 @@ def seeds_food():
         r.append((t,"English / Expat"))
         for d in EN_LOC: r.append((f"{t} {d}","English / Expat"))
         for m in ["near me","cheap","price","menu"]: r.append((f"{t} {m}","English / Expat"))
+    return _dedupe(r)
+
+def seeds_water():
+    r=[]
+    action=["đổi nước","giao nước bình","đại lý nước suối","gọi nước bình",
+            "nước suối đóng chai giá sỉ","nước bình 20l giao tận nơi",
+            "giao nước uống văn phòng","đổi nước văn phòng","nước uống văn phòng"]
+    brands=["nước lavie","lavie văn phòng","đổi nước lavie","nước vĩnh hảo",
+            "vĩnh hảo bình 20l","nước ion life","ion life văn phòng",
+            "nước aquafina","aquafina văn phòng","nước bidrico","nước sapuwa"]
+    bottle=["nước bình 20l","nước bình 19l","nước uống đóng bình","bình nước 20l",
+            "bình nước 19l","nước bình úp","nước khoáng bình 20l"]
+    meeting=["nước suối đóng chai giá sỉ","nước suối thùng","nước chai 350ml",
+             "nước chai 500ml","nước khoáng phòng họp","nước suối phòng họp",
+             "nước uống hội nghị"]
+    equipment=["thuê cây nước nóng lạnh","mua cây nước nóng lạnh văn phòng",
+               "bình nước úp cho cây nóng lạnh","cây nước nóng lạnh văn phòng"]
+    en=["office water delivery","corporate water supply","mineral water for office",
+        "water bottle 20l delivery","bottled water delivery service","20l water bottle near me"]
+    mods=["giao tận nơi","gần đây","giá sỉ","cho công ty","cho văn phòng","có hóa đơn",
+          "vat","theo tháng","chiết khấu"]
+
+    for t in action: r.append((t,"Hành vi / Dịch vụ"))
+    for t in brands: r.append((t,"Thương hiệu"))
+    for t in bottle: r.append((t,"Bình 19L/20L"))
+    for t in meeting: r.append((t,"Chai nhỏ / Phòng họp"))
+    for t in equipment: r.append((t,"Thiết bị"))
+
+    local_base=action+brands+bottle+meeting+equipment
+    for t in local_base:
+        for d in DISTRICTS: r.append((f"{t} {d}","Local"))
+        for c in WATER_CLUSTERS: r.append((f"{t} {c}","Local"))
+    for t in brands+bottle+action:
+        for s in STREETS[:14]: r.append((f"{t} đường {s}","Local"))
+    for t in action+brands+bottle+meeting:
+        for m in mods: r.append((f"{t} {m}","Modifier"))
+    for t in brands+bottle:
+        for d in DISTRICTS:
+            for m in ["giao tận nơi","giá sỉ","theo tháng"]:
+                r.append((f"{t} {d} {m}","Local"))
+    for t in en:
+        r.append((t,"English / Corporate"))
+        for d in EN_LOC: r.append((f"{t} {d}","English / Corporate"))
+        for m in ["near me","price","invoice","office pantry"]:
+            r.append((f"{t} {m}","English / Corporate"))
     return _dedupe(r)
 
 def seeds_realestate():
@@ -124,7 +171,7 @@ def seeds_hotel():
         r.append((t,"English / Expat"))
     return _dedupe(r)
 
-INDUSTRIES = {"food":seeds_food, "realestate":seeds_realestate, "hotel":seeds_hotel}
+INDUSTRIES = {"food":seeds_food, "realestate":seeds_realestate, "hotel":seeds_hotel, "water":seeds_water}
 
 if __name__ == "__main__":
     for k,f in INDUSTRIES.items():

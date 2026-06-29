@@ -25,7 +25,7 @@ Vercel → project `suggest-dashboard-v3` → **Settings → Environment Variabl
 Sau đó **Redeploy** (`vercel --prod` hoặc Deployments → Redeploy).
 
 ## Cơ chế chuyển nguồn
-- Khi `DATA_PROVIDER=supabase` + có `SUPABASE_URL` → **cả 3 ngành** đọc từ Supabase.
+- Khi `DATA_PROVIDER=supabase` + có `SUPABASE_URL` → **cả 4 ngành** đọc từ Supabase.
 - Khi để trống / `DATA_PROVIDER` khác → quay lại Apps Script (nếu có env) hoặc mock.
 - Frontend KHÔNG phải sửa gì — chỉ đổi biến môi trường. Có thể bật/tắt bất cứ lúc nào.
 

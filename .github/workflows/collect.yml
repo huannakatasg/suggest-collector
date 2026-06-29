@@ -5,6 +5,15 @@ on:
     - cron: "30 0 * * *"   # ~07:30 giờ VN mỗi ngày
     - cron: "30 6 * * *"   # ~13:30 giờ VN mỗi ngày
   workflow_dispatch:        # cho phép chạy tay (lần đầu nạp dữ liệu)
+    inputs:
+      industries:
+        description: "Comma-separated industries to collect"
+        required: false
+        default: "food,realestate,hotel,water"
+      delay:
+        description: "Delay between suggest requests"
+        required: false
+        default: "0.6"
 
 concurrency:
   group: suggest-collector
@@ -23,6 +32,6 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          INDUSTRIES: "food,realestate,hotel"
-          DELAY: "0.6"
+          INDUSTRIES: ${{ github.event.inputs.industries || 'food,realestate,hotel,water' }}
+          DELAY: ${{ github.event.inputs.delay || '0.6' }}
         run: python collector.py
