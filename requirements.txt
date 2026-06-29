@@ -1,0 +1,2 @@
+# Collector chỉ dùng thư viện chuẩn của Python (urllib, json) — không cần cài thêm gì.
+# File này để trống có chủ đích; giữ lại cho rõ ràng.
