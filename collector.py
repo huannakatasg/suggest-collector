@@ -115,6 +115,16 @@ def main():
             print(f"Bỏ qua ngành lạ: {ind}")
             continue
         total += run_industry(ind)
+    # Gộp theo tuần TRƯỚC khi dọn: suggest_weekly giữ lịch sử dài hạn (so sánh cùng kỳ,
+    # mùa vụ) sau khi dữ liệu thô bị prune. Rollup hỏng thì BỎ QUA prune — thà tốn chỗ
+    # còn hơn xóa dữ liệu chưa kịp gộp.
+    try:
+        rolled = rpc("suggest_rollup_weekly", {"p_days_back": 21})
+        print(f"rollup tuần: upsert {rolled} dòng vào suggest_weekly")
+    except Exception as e:
+        print("rollup lỗi:", e, "-> bỏ qua prune lần này cho an toàn")
+        print(f"XONG. Tổng ghi {total} dòng.")
+        return
     # dọn dữ liệu > 90 ngày
     try:
         pruned = rpc("suggest_prune", {"p_days": 90})
