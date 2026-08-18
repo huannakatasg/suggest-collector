@@ -9,7 +9,7 @@ on:
       industries:
         description: "Comma-separated industries to collect"
         required: false
-        default: "food,realestate,hotel,water"
+        default: "food,realestate,hotel,water,produce"
       delay:
         description: "Delay between suggest requests"
         required: false
@@ -32,6 +32,6 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          INDUSTRIES: ${{ github.event.inputs.industries || 'food,realestate,hotel,water' }}
+          INDUSTRIES: ${{ github.event.inputs.industries || 'food,realestate,hotel,water,produce' }}
           DELAY: ${{ github.event.inputs.delay || '0.6' }}
         run: python collector.py

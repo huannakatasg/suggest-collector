@@ -111,5 +111,56 @@ def classify_water(s: str) -> str:
     return "Other"
 
 
-CLASSIFIERS = {"food": classify_food, "realestate": classify_realestate, "hotel": classify_hotel, "water": classify_water}
-NEGATIVE = {"realestate": re_is_negative, "water": water_is_negative}
+def classify_produce(s: str) -> str:
+    """Rau củ quả B2B. Thứ tự nhánh có chủ đích: các ý định HẸP và đắt tiền
+    (chợ đầu mối, sơ chế, chứng nhận) phải bắt TRƯỚC nhánh rộng, nếu không
+    chúng bị nhánh 'B2B' hoặc 'Pricing' nuốt mất."""
+    t = (s or "").lower()
+    if "đồng khởi" in t or "thành gia định" in t:
+        return "Brand"
+    # Chợ đầu mối = mặt trận riêng, và là nơi giá hình thành. Bắt trước Pricing.
+    if re.search(r"(chợ đầu mối|chợ nông sản|chợ sỉ|bình điền|hóc môn|thủ đức.*chợ|chợ.*thủ đức)", t):
+        return "Market"
+    # Sơ chế/cắt sẵn = dịch vụ biên lợi nhuận cao, đừng để rơi vào Service chung
+    if re.search(r"(sơ chế|cắt sẵn|gọt sẵn|rửa sẵn|bóc sẵn|thái sẵn|đóng gói theo yêu cầu)", t):
+        return "Processing"
+    if re.search(r"(vietgap|globalgap|hữu cơ|organic|an toàn thực phẩm|attp|truy xuất|chứng nhận|kiểm định|hóa đơn|vat)", t):
+        return "Certification"
+    if re.search(r"(giao|ship|tận nơi|mỗi ngày|sáng sớm|trong ngày|đúng giờ|vận chuyển)", t):
+        return "Delivery"
+    if re.search(r"(bảng giá|báo giá|giá sỉ|giá bán|giá hôm nay|bao nhiêu|đơn giá|giá thị trường|giá rẻ)", t):
+        return "Pricing"
+    # Ai mua — trục thương mại chính của ngành này
+    if re.search(r"(nhà hàng|quán ăn|khách sạn|bếp ăn|căn tin|canteen|suất ăn|chuỗi|trường học|công ty|siêu thị|resort|tiệc)", t):
+        return "B2B"
+    if re.search(r"(nguồn|ở đâu|đà lạt|miền tây|lâm đồng|nhà vườn|hợp tác xã|vùng trồng|tìm nhà cung cấp)", t):
+        return "Sourcing"
+    if re.search(r"(cung cấp|nhà cung cấp|đơn vị|công ty|đại lý|bán sỉ|sỉ\b|số lượng lớn|hợp đồng)", t):
+        return "Supply"
+    if re.search(r"(quận|phường|huyện|gần|tphcm|hồ chí minh|sài gòn|thủ đức|bình thạnh)", t):
+        return "Local"
+    return "Product"
+
+
+def produce_is_negative(s: str) -> bool:
+    """Loại nhiễu của ngành rau củ. Bốn nhóm, đều đã thấy thật khi đo SERP 18/08:
+      1) THIẾT BỊ — nahaki (tủ cơm, inox) và kainox lọt cả vào top 5 SERP rau củ
+      2) TRỒNG TRỌT — hạt giống, phân bón, kỹ thuật trồng: người trồng, không phải người mua
+      3) NẤU ĂN / SỨC KHỎE — công thức, tác dụng, giảm cân: người tiêu dùng cuối
+      4) BÁN LẺ — siêu thị, bách hóa, mua lẻ 1kg: sai hoàn toàn tệp khách B2B
+    """
+    t = (s or "").lower()
+    return bool(re.search(
+        r"(máy rửa|máy thái|máy gọt|máy sấy|tủ cơm|tủ hấp|tủ mát|tủ đông|inox|thiết bị bếp|"
+        r"dụng cụ|khay đựng|rổ nhựa|kệ hàng|"
+        r"hạt giống|cách trồng|kỹ thuật trồng|phân bón|thuốc trừ sâu|giống cây|ươm giống|"
+        r"trồng tại nhà|trồng thủy canh|vườn nhà|"
+        r"cách nấu|cách làm|công thức|món ngon|nấu món|chế biến món|ăn kiêng|giảm cân|"
+        r"tác dụng|công dụng|có tốt không|bà bầu|trẻ em|dinh dưỡng của|chữa bệnh|"
+        r"bách hóa xanh|winmart|co ?opmart|lotte|aeon|emart|mua lẻ|bán lẻ|đi chợ hộ|"
+        r"tuyển dụng|việc làm|thực tập)", t))
+
+
+CLASSIFIERS = {"food": classify_food, "realestate": classify_realestate, "hotel": classify_hotel,
+               "water": classify_water, "produce": classify_produce}
+NEGATIVE = {"realestate": re_is_negative, "water": water_is_negative, "produce": produce_is_negative}

@@ -171,7 +171,95 @@ def seeds_hotel():
         r.append((t,"English / Expat"))
     return _dedupe(r)
 
-INDUSTRIES = {"food":seeds_food, "realestate":seeds_realestate, "hotel":seeds_hotel, "water":seeds_water}
+def seeds_produce():
+    """Rau củ quả B2B cho nhà hàng/quán ăn/bếp ăn. Các trục dưới đây KHÔNG phải đoán —
+    lấy từ đo SERP thật 18/08/2026 (15 seed lõi, 133 slot, 37 trang đối thủ):
+      · Google coi "nông sản" gần như đồng nghĩa "rau củ quả" (8 lần trong Related Searches)
+      · Cụm giá bám theo TỪNG CHỢ ĐẦU MỐI (Thủ Đức/Hóc Môn/Bình Điền) và TỪNG MẶT HÀNG
+      · "Đà Lạt" là một trục nguồn hàng riêng (5 lần trong Related)
+      · Chi tiết: docs/RAU_CU_B2B_NGHIEN_CUU.md của repo app
+    """
+    r=[]
+    # Cách gọi mặt hàng — cả hai biến thể, vì Google gộp chúng
+    goods=["rau củ quả","rau củ","nông sản","rau sạch","rau an toàn","thực phẩm tươi sống"]
+    # Ai mua — trục quan trọng nhất, mỗi loại khách là một SERP riêng
+    buyers=["nhà hàng","quán ăn","chuỗi nhà hàng","chuỗi quán ăn","khách sạn","bếp ăn công nghiệp",
+            "bếp ăn tập thể","căn tin","canteen","suất ăn công nghiệp","quán chay","quán lẩu",
+            "quán phở","nhà hàng tiệc cưới","trường học","công ty","siêu thị","cửa hàng thực phẩm"]
+    # Động từ giao dịch
+    verbs=["cung cấp","nhà cung cấp","đơn vị cung cấp","công ty cung cấp","nguồn","mua","bán sỉ","đại lý"]
+    # Ý định giá — cụm có PAA duy nhất trong 15 seed đã đo
+    price=["bảng giá","báo giá","giá sỉ","giá bán sỉ","giá hôm nay","giá bao nhiêu","giá thị trường","đơn giá"]
+    markets=["chợ đầu mối","chợ đầu mối thủ đức","chợ đầu mối hóc môn","chợ đầu mối bình điền",
+             "chợ nông sản","chợ sỉ"]
+    # Nguồn hàng
+    sources=["đà lạt","miền tây","củ chi","lâm đồng","nhà vườn","hợp tác xã","vùng trồng"]
+    # Dịch vụ — pain point thật của bếp
+    services=["giao tận nơi","giao hàng tận nơi","giao hàng mỗi ngày","giao hàng sáng sớm",
+              "giao trong ngày","sơ chế sẵn","cắt sẵn","gọt sẵn","rửa sẵn","đóng gói theo yêu cầu",
+              "số lượng lớn","theo hợp đồng","theo tháng","ổn định","có hóa đơn","xuất hóa đơn vat"]
+    certs=["vietgap","globalgap","hữu cơ","organic","an toàn thực phẩm","attp","truy xuất nguồn gốc",
+           "có giấy chứng nhận","kiểm định"]
+    # Mặt hàng cụ thể — luôn kèm modifier B2B, không bao giờ để trần
+    items=["cà rốt","khoai tây","xà lách","cà chua","dưa leo","bắp cải","súp lơ","hành tây","củ cải",
+           "bí đỏ","bí xanh","rau muống","cải ngọt","cải thìa","cải thảo","rau thơm","hành lá","ngò rí",
+           "sả","gừng","tỏi","ớt","nấm rơm","nấm bào ngư","nấm đùi gà","nấm kim châm","giá đỗ",
+           "khổ qua","đậu bắp","đậu cove","bầu","mướp","rau quế","húng quế","chanh","khoai lang"]
+    item_mods=["giá sỉ","giá sỉ tphcm","cho nhà hàng","sỉ hôm nay","giá hôm nay","đà lạt giá sỉ","cắt sẵn"]
+    # Combo theo món — long-tail ít cạnh tranh
+    combos=["rau lẩu","rau nhúng lẩu","rau sống quán phở","rau ăn kèm bún bò","rau salad",
+            "rau củ luộc","rau món chay","rau món âu","rau thơm các loại"]
+
+    for g in goods:
+        r.append((g+" sỉ","Core"))
+        for v in verbs: r.append((f"{v} {g}","Core"))
+    # Ai mua × cách gọi × động từ  -> trục thương mại chính
+    for g in goods[:4]:
+        for b in buyers:
+            r.append((f"{g} cho {b}","B2B"))
+            for v in verbs[:5]: r.append((f"{v} {g} cho {b}","B2B"))
+    # Giá — kèm địa bàn và chợ
+    for g in goods[:4]:
+        for p in price:
+            r.append((f"{p} {g}","Pricing"))
+            r.append((f"{p} {g} tphcm","Pricing"))
+    for m in markets:
+        r.append((f"giá rau củ quả {m} hôm nay","Market"))
+        r.append((f"giá nông sản {m} hôm nay","Market"))
+        r.append((f"lấy hàng {m}","Market"))
+    # Nguồn hàng
+    for g in goods[:4]:
+        for s in sources:
+            r.append((f"{g} {s}","Sourcing"))
+            r.append((f"nguồn {g} {s}","Sourcing"))
+    for g in goods[:3]:
+        r.append((f"mua {g} sỉ ở đâu tphcm","Sourcing"))
+        r.append((f"tìm nhà cung cấp {g}","Sourcing"))
+    # Dịch vụ × cách gọi
+    for g in goods[:4]:
+        for s in services: r.append((f"{g} {s}","Service"))
+    # Chứng nhận
+    for g in goods[:4]:
+        for c in certs: r.append((f"{g} {c}","Certification"))
+    # Địa bàn — chỉ với 3 cách gọi mạnh nhất để không phình
+    for g in goods[:3]:
+        for d in DISTRICTS:
+            r.append((f"cung cấp {g} {d}","Local"))
+            r.append((f"nhà cung cấp {g} {d}","Local"))
+        r.append((f"nhà cung cấp {g} tphcm","Local"))
+        r.append((f"cung cấp {g} tphcm","Local"))
+    # Mặt hàng cụ thể — LUÔN có modifier B2B
+    for it in items:
+        for m in item_mods: r.append((f"{it} {m}","Product"))
+    # Combo theo món
+    for c in combos:
+        r.append((f"{c} giá sỉ","Product"))
+        r.append((f"{c} cho nhà hàng","Product"))
+    return _dedupe(r)
+
+
+INDUSTRIES = {"food":seeds_food, "realestate":seeds_realestate, "hotel":seeds_hotel,
+              "water":seeds_water, "produce":seeds_produce}
 
 if __name__ == "__main__":
     for k,f in INDUSTRIES.items():
