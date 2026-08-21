@@ -258,8 +258,101 @@ def seeds_produce():
     return _dedupe(r)
 
 
+def seeds_vegetarian():
+    """Món chay — module Mộc An (3 kênh: Daily cơm phần / Gifts quà chay / Pro B2B).
+    Trục lấy từ spec 'Mộc An Vegetarian Food R&D' trong repo app: intent
+    recipe/buy/delivery/restaurant/price/healthy/gift/b2b/occasion + trục MÓN
+    và NGUYÊN LIỆU (nấm, đậu hũ, sen, mít non...).
+    KHÁC ngành food (suất ăn văn phòng/catering): ở đây đơn vị nhu cầu là MÓN
+    và SẢN PHẨM chay — dữ liệu này về sau map về Dish entity cho R&D.
+    Lưu ý: "cách làm/công thức" KHÔNG phải nhiễu ở ngành này — đó là tín hiệu
+    R&D trực tiếp (người tìm công thức = món có nhu cầu), ngược với produce."""
+    r=[]
+    # Cách gọi chung — nền phủ rộng
+    goods=["món chay","đồ chay","cơm chay","đồ ăn chay","thực phẩm chay","món ăn chay"]
+    for g in goods:
+        r.append((g,"Core")); r.append((g+" ngon","Core"))
+        r.append((g+" gần đây","Local")); r.append((g+" tphcm","Local"))
+    # Món cụ thể — trái tim của R&D: mỗi món một cụm demand riêng, sau này thành Dish
+    dishes=["lẩu chay","bún chay","phở chay","bún riêu chay","bún bò chay","hủ tiếu chay",
+            "mì chay","miến chay","bánh mì chay","cơm tấm chay","cơm chiên chay","xôi chay",
+            "cháo chay","súp chay","gỏi chay","salad chay","gỏi cuốn chay","bì cuốn chay",
+            "chả chay","chả giò chay","chả lụa chay","nem chay","pate chay","ruốc nấm",
+            "chà bông chay","xúc xích chay","lạp xưởng chay","há cảo chay","bánh xèo chay",
+            "bánh cuốn chay","cà ri chay","bò kho chay","kho quẹt chay","mắm chay",
+            "canh chua chay","canh kiểm","thịt kho chay","sườn non chay","cá kho chay",
+            "gà chay","heo quay chay","khô bò chay","bánh bao chay","đậu hũ nhồi",
+            "nấm kho tiêu","cơm sen","chả nấm"]
+    for d in dishes:
+        r.append((d,"Dish")); r.append((d+" ngon","Dish"))
+        r.append(("cách làm "+d,"Recipe")); r.append(("cách nấu "+d,"Recipe"))
+        r.append((d+" mua ở đâu","Buy")); r.append((d+" giá bao nhiêu","Pricing"))
+    # Nguyên liệu chủ lực — một nguyên liệu tạo được bao nhiêu món?
+    ingredients=["nấm","đậu hũ","tàu hũ ky","mì căn","củ sen","hạt sen","mít non",
+                 "chuối xanh","đậu nành","rong biển","nấm đùi gà","nấm bào ngư","nấm rơm",
+                 "nấm kim châm","nấm hương","nấm mối đen","đậu gà","đậu lăng"]
+    for i in ingredients:
+        r.append(("món chay từ "+i,"Ingredient"))
+        r.append(("món chay với "+i,"Ingredient"))
+        r.append((i+" làm món gì","Ingredient"))
+    # Công thức & thực đơn — tín hiệu R&D trực tiếp
+    recipes=["món chay dễ làm","món chay đơn giản","món chay đãi tiệc","món chay ngon dễ làm",
+             "thực đơn chay","thực đơn chay 7 ngày","thực đơn chay hàng ngày","mâm cơm chay",
+             "món chay mới lạ","món chay sang trọng","món chay đẹp mắt","nấu chay",
+             "món chay cho người mới ăn chay","món chay cuối tuần"]
+    for x in recipes: r.append((x,"Recipe"))
+    # Healthy / đạm — trục sức khỏe của spec
+    healthy=["món chay healthy","ăn chay healthy","món chay giảm cân","thực đơn chay giảm cân",
+             "món chay giàu đạm","món chay giàu protein","đạm chay","protein thực vật",
+             "ăn chay đủ chất","ăn chay khoa học","eat clean chay","món chay ít dầu mỡ",
+             "ăn chay có tốt không","ăn chay trường thiếu chất gì","đạm thực vật từ đâu"]
+    for x in healthy: r.append((x,"Healthy"))
+    # Dịp — mùa vụ của ngành: rằm, mùng 1, Vu Lan, Tết, giỗ
+    occasions=["món chay ngày rằm","món chay mùng 1","mâm cơm chay cúng","mâm cỗ chay",
+               "cỗ chay ngày giỗ","món chay cúng rằm tháng 7","món chay vu lan","món chay ngày tết",
+               "thực đơn tiệc chay","đặt tiệc chay","nấu cỗ chay thuê","buffet chay",
+               "món chay đãi khách","mâm chay cúng về nhà mới","mâm chay cúng khai trương"]
+    for x in occasions: r.append((x,"Occasion"))
+    # Quán / nhà hàng — kênh cạnh tranh + demand ăn ngoài
+    resto=["quán chay","quán chay ngon","nhà hàng chay","buffet chay","quán cơm chay",
+           "tiệm chay","quán chay bình dân","nhà hàng chay sang trọng","quán chay gần đây"]
+    for x in resto:
+        r.append((x,"Restaurant")); r.append((x+" tphcm","Restaurant"))
+    for d in DISTRICTS:
+        r.append((f"quán chay {d}","Local")); r.append((f"cơm chay {d}","Local"))
+    # Giao hàng — kênh Mộc An Daily
+    delivery=["cơm chay giao tận nơi","đặt cơm chay online","cơm chay văn phòng",
+              "cơm chay giao hàng","đồ chay giao tận nơi","đặt món chay","ship đồ chay",
+              "cơm chay trưa","đặt cơm chay theo tháng","cơm chay phần","cơm chay hộp"]
+    for x in delivery: r.append((x,"Delivery"))
+    # Quà chay — kênh Mộc An Gifts
+    gifts=["quà chay","quà tặng chay","giỏ quà chay","hộp quà chay","quà tết chay",
+           "quà vu lan","quà tặng người ăn chay","set quà chay","giỏ quà tết chay",
+           "quà biếu người ăn chay","bánh chay làm quà"]
+    for x in gifts: r.append((x,"Gift"))
+    # Đóng gói / chế biến sẵn — Mộc An Gifts + Pro
+    packaged=["đồ chay đóng gói","thực phẩm chay đóng gói","đồ chay đông lạnh","đồ chay cấp đông",
+              "chả chay đóng gói","đồ chay ăn liền","đồ chay khô","thực phẩm chay chế biến sẵn",
+              "pate chay hộp","đồ chay hút chân không","gia vị chay","nước mắm chay",
+              "hạt nêm chay","sốt chay","đồ hộp chay","mì chay gói"]
+    for x in packaged: r.append((x,"Packaged"))
+    # B2B / sỉ — kênh Mộc An Pro
+    b2b=["đồ chay sỉ","đồ chay giá sỉ","bỏ sỉ đồ chay","sỉ đồ chay","nguồn hàng đồ chay",
+         "nguyên liệu chay cho quán","nguyên liệu nấu chay","cung cấp đồ chay","cung cấp đồ chay cho quán",
+         "gia công đồ chay","xưởng sản xuất đồ chay","đại lý đồ chay","mở quán chay",
+         "mở quán chay cần bao nhiêu vốn","kinh doanh đồ chay","đồ chay xuất hóa đơn",
+         "cung cấp suất ăn chay","suất ăn chay công nghiệp","cơm chay công ty","đặt cơm chay công ty",
+         "cung cấp tiệc chay","đặt cỗ chay công ty"]
+    for x in b2b: r.append((x,"B2B"))
+    # Giá — nhánh thương mại chung
+    prices=["giá đồ chay","cơm chay bao nhiêu 1 phần","giá tiệc chay","bảng giá tiệc chay",
+            "giá buffet chay","đồ chay rẻ","giá chả chay","combo cơm chay"]
+    for x in prices: r.append((x,"Pricing"))
+    return _dedupe(r)
+
+
 INDUSTRIES = {"food":seeds_food, "realestate":seeds_realestate, "hotel":seeds_hotel,
-              "water":seeds_water, "produce":seeds_produce}
+              "water":seeds_water, "produce":seeds_produce, "vegetarian":seeds_vegetarian}
 
 if __name__ == "__main__":
     for k,f in INDUSTRIES.items():

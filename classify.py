@@ -161,6 +161,65 @@ def produce_is_negative(s: str) -> bool:
         r"tuyển dụng|việc làm|thực tập)", t))
 
 
+def classify_vegetarian(s: str) -> str:
+    """Món chay (Mộc An). Thứ tự nhánh: các ý định HẸP và ra tiền (quà, đóng gói,
+    sỉ B2B, dịp lễ) bắt TRƯỚC các nhánh rộng (quán, giá, core) — nếu không chúng
+    bị nuốt. 'Cách làm/công thức' là tín hiệu R&D, KHÔNG phải nhiễu ở ngành này."""
+    t = (s or "").lower()
+    if re.search(r"(mộc an|đồng khởi|thành gia định)", t):
+        return "Brand"
+    # Quà chay — kênh Gifts, biên cao, bắt trước mọi nhánh rộng
+    if re.search(r"(quà|giỏ quà|hộp quà|biếu|tặng)", t):
+        return "Gift"
+    # Đóng gói / chế biến sẵn — kênh Pro + Gifts
+    if re.search(r"(đóng gói|đóng hộp|đồ hộp|cấp đông|đông lạnh|ăn liền|chân không|chế biến sẵn|đồ chay khô|hạn sử dụng|bảo quản)", t):
+        return "Packaged"
+    # Sỉ / B2B — kênh Pro
+    if re.search(r"(sỉ|bỏ sỉ|gia công|xưởng|đại lý|nguồn hàng|mở quán|kinh doanh|hóa đơn|suất ăn chay|công ty|công nghiệp|catering|nguyên liệu.*(quán|nhà hàng))", t):
+        return "B2B"
+    # Dịp lễ — mùa vụ: rằm, mùng 1, Vu Lan, Tết, giỗ, tiệc
+    if re.search(r"(rằm|mùng 1|mồng 1|vu lan|tết|giỗ|cúng|cỗ|lễ|phật đản|tiệc|đãi khách)", t):
+        return "Occasion"
+    if re.search(r"(cách làm|cách nấu|công thức|hướng dẫn|tự làm|nấu như thế nào|làm tại nhà)", t):
+        return "Recipe"
+    if re.search(r"(giao|ship|tận nơi|online|mang về|đặt cơm|đặt món)", t):
+        return "Delivery"
+    if re.search(r"(quán|nhà hàng|buffet|tiệm|địa chỉ|ở đâu ngon|gần đây)", t):
+        return "Restaurant"
+    if re.search(r"(giá|bao nhiêu|rẻ|khuyến mãi|combo|bảng giá)", t):
+        return "Pricing"
+    if re.search(r"(healthy|giảm cân|eat clean|dinh dưỡng|đủ chất|đạm|protein|tốt không|tốt cho|thiếu chất|khoa học)", t):
+        return "Healthy"
+    # Nguyên liệu — trả lời "một nguyên liệu tạo được bao nhiêu món"
+    if re.search(r"(nấm|đậu hũ|tàu hũ|mì căn|củ sen|hạt sen|mít non|chuối xanh|đậu nành|rong biển|đậu gà|đậu lăng)", t):
+        return "Ingredient"
+    if re.search(r"(quận|phường|huyện|gần|tphcm|hồ chí minh|sài gòn|hà nội|đà nẵng|thủ đức|bình thạnh)", t):
+        return "Local"
+    if "chay" in t:
+        return "Core"
+    return "Other"
+
+
+def vegetarian_is_negative(s: str) -> bool:
+    """Loại nhiễu ngành món chay. Năm nhóm:
+      1) TÔN GIÁO THUẦN TÚY — tụng kinh, khóa tu: không phải nhu cầu món ăn
+         (nhưng rằm/Vu Lan/cúng GIỮ LẠI — đó là mùa vụ bán hàng)
+      2) GIẢI TRÍ — phim, truyện, nhạc
+      3) THIẾT BỊ — máy làm đậu hũ, tủ đông: người mua máy, không mua món
+      4) TRỒNG TRỌT — hạt giống, cách trồng: người trồng, không phải người ăn
+      5) VIỆC LÀM — tuyển dụng, lương
+    KHÔNG lọc 'cách làm/công thức' (tín hiệu R&D) và KHÔNG lọc siêu thị bán lẻ
+    (đối chứng kênh retail cho Daily/Gifts)."""
+    t = (s or "").lower()
+    return bool(re.search(
+        r"(tụng kinh|nghe kinh|kinh phật|khóa tu|pháp thoại|giảng pháp|xuất gia|đi tu|thầy thích|"
+        r"phim|truyện|lời bài hát|karaoke|game|"
+        r"máy làm|máy ép|máy xay công nghiệp|tủ đông|tủ mát|thiết bị bếp|dụng cụ|khuôn ép|"
+        r"hạt giống|cách trồng|kỹ thuật trồng|phân bón|trồng tại nhà|"
+        r"tuyển dụng|việc làm|thực tập|mức lương)", t))
+
+
 CLASSIFIERS = {"food": classify_food, "realestate": classify_realestate, "hotel": classify_hotel,
-               "water": classify_water, "produce": classify_produce}
-NEGATIVE = {"realestate": re_is_negative, "water": water_is_negative, "produce": produce_is_negative}
+               "water": classify_water, "produce": classify_produce, "vegetarian": classify_vegetarian}
+NEGATIVE = {"realestate": re_is_negative, "water": water_is_negative, "produce": produce_is_negative,
+            "vegetarian": vegetarian_is_negative}
