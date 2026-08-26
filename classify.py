@@ -164,7 +164,11 @@ def produce_is_negative(s: str) -> bool:
 def classify_vegetarian(s: str) -> str:
     """Món chay (Mộc An). Thứ tự nhánh: các ý định HẸP và ra tiền (quà, đóng gói,
     sỉ B2B, dịp lễ) bắt TRƯỚC các nhánh rộng (quán, giá, core) — nếu không chúng
-    bị nuốt. 'Cách làm/công thức' là tín hiệu R&D, KHÔNG phải nhiễu ở ngành này."""
+    bị nuốt. 'Cách làm/công thức' là tín hiệu R&D, KHÔNG phải nhiễu ở ngành này.
+
+    14 nhãn (thêm 'Retail' ngày 26/08/2026): Brand, Gift, Packaged, B2B, Occasion,
+    Recipe, Retail, Delivery, Restaurant, Pricing, Healthy, Ingredient, Local, Core, Other.
+    Ánh xạ kênh: Gift->GIFTS · Packaged+Retail->SHOP · B2B->PRO · Delivery+Restaurant->DAILY."""
     t = (s or "").lower()
     if re.search(r"(mộc an|đồng khởi|thành gia định)", t):
         return "Brand"
@@ -182,6 +186,13 @@ def classify_vegetarian(s: str) -> str:
         return "Occasion"
     if re.search(r"(cách làm|cách nấu|công thức|hướng dẫn|tự làm|nấu như thế nào|làm tại nhà)", t):
         return "Recipe"
+    # BÁN LẺ — kênh SHOP. Thêm 26/08/2026 sau khi đo: 19 seed nhóm "mua ở đâu" sinh 220 dòng
+    # nhưng 130 dòng bị dồn vào Core vì không có nhãn riêng, làm loãng cả Core lẫn tín hiệu
+    # bán lẻ. Đặt TRƯỚC Delivery để "mua online" không bị nhánh "online" của Delivery nuốt,
+    # và SAU Packaged để dạng sản phẩm (đóng gói/ăn liền) vẫn được ưu tiên nhận diện.
+    if re.search(r"(mua ở đâu|bán ở đâu|chỗ bán|nơi bán|chỗ mua|đặt mua|mua\s.{0,25}online|"
+                 r"siêu thị|bách hóa|tạp hóa|cửa hàng|store)", t):
+        return "Retail"
     if re.search(r"(giao|ship|tận nơi|online|mang về|đặt cơm|đặt món)", t):
         return "Delivery"
     if re.search(r"(quán|nhà hàng|buffet|tiệm|địa chỉ|ở đâu ngon|gần đây)", t):
