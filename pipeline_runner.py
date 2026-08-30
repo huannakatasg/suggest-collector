@@ -214,28 +214,51 @@ def run_http_pipeline(source: str) -> dict:
     else:
         endpoint, table, column = "/api/competitors/scan", "competitor_serp", "week"
     before = latest_value(table, column)
-    http_status, payload = request_json(
-        f"{TGD_BASE_URL}{endpoint}",
-        headers={"Authorization": f"Bearer {RUNNER_TOKEN}"},
-        timeout=180,
-    )
-    if http_status not in range(200, 300) or not isinstance(payload, dict) or payload.get("ok") is not True:
-        detail = payload.get("error", "HTTP request failed") if isinstance(payload, dict) else "HTTP request failed"
-        raise PipelineFailure("FAILED", f"HTTP_{http_status}", str(detail), http_status=http_status)
-
     if source == "gsc":
+        http_status, payload = request_json(
+            f"{TGD_BASE_URL}{endpoint}",
+            headers={"Authorization": f"Bearer {RUNNER_TOKEN}"},
+            timeout=180,
+        )
+        if http_status not in range(200, 300) or not isinstance(payload, dict) or payload.get("ok") is not True:
+            detail = payload.get("error", "HTTP request failed") if isinstance(payload, dict) else "HTTP request failed"
+            raise PipelineFailure("FAILED", f"HTTP_{http_status}", str(detail), http_status=http_status)
         written = int(payload.get("written") or 0)
         expected = (payload.get("window") or {}).get("from")
+        result_payload = payload
     else:
-        data = payload.get("data") or {}
-        written = int(data.get("saved") or 0)
-        expected = data.get("week")
+        written = 0
+        expected = None
+        summaries = []
+        http_status = 200
+        for industry in ("hotel", "food", "water", "realestate"):
+            query = urllib.parse.urlencode({"industry": industry})
+            part_status, payload = request_json(
+                f"{TGD_BASE_URL}{endpoint}?{query}",
+                headers={"Authorization": f"Bearer {RUNNER_TOKEN}"},
+                timeout=90,
+            )
+            if part_status not in range(200, 300) or not isinstance(payload, dict) or payload.get("ok") is not True:
+                detail = payload.get("error", "HTTP request failed") if isinstance(payload, dict) else "HTTP request failed"
+                raise PipelineFailure(
+                    "FAILED",
+                    f"HTTP_{part_status}",
+                    f"SERP {industry}: {detail}",
+                    http_status=part_status,
+                    rows_written=written,
+                )
+            data = payload.get("data") or {}
+            part_written = int(data.get("saved") or 0)
+            written += part_written
+            expected = expected or data.get("week")
+            summaries.append({"industry": industry, "rows": int(data.get("rows") or 0), "saved": part_written})
+        result_payload = {"week": expected, "industries": summaries}
     after = latest_value(table, column)
     if written <= 0:
         raise PipelineFailure("NO_DATA", "UNEXPECTED_ZERO", f"{source.upper()} endpoint wrote zero rows", http_status=http_status, rows_written=0)
     if not after or (expected and after < expected):
         raise PipelineFailure("STALE", "ARRIVAL_NOT_ADVANCED", f"{source.upper()} destination latest={after}, expected at least {expected}", http_status=http_status, rows_written=written)
-    return {"status": "SUCCESS", "rows_written": written, "before": before, "after": after, "http_status": http_status, "result": payload}
+    return {"status": "SUCCESS", "rows_written": written, "before": before, "after": after, "http_status": http_status, "result": result_payload}
 
 
 def as_timestamp(value: str | None) -> str | None:
