@@ -2,6 +2,10 @@
 """Phân loại intent + lọc negative cho từng ngành (port từ Apps Script)."""
 import re
 
+# Update this only when classifier logic changes. Operational-only commits do
+# not create a new classifier boundary.
+CLASSIFIER_VERSION = "classify-73066a5"
+
 
 def is_english(s: str) -> bool:
     t = (s or "").lower().strip()

@@ -92,7 +92,8 @@ def run_industry(ind):
                 skipped += 1
                 continue
             rows.append({"keyword_goc": kw, "nhom": nhom, "goi_y": sug,
-                         "rank": rk, "intent": classifier(sug)})
+                         "rank": rk, "intent": classifier(sug),
+                         "classifier_version": classify.CLASSIFIER_VERSION})
         done += 1
         if done % 200 == 0:
             print(f"[{ind}] ...{done}/{len(seed_list)} seed, {len(rows)} gợi ý")
