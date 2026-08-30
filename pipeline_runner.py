@@ -94,6 +94,41 @@ def detect_alerts() -> None:
         raise RuntimeError(f"pipeline detector failed: HTTP {status}")
 
 
+def try_detect_alerts() -> None:
+    try:
+        detect_alerts()
+    except Exception as error:
+        print(f"PIPELINE_DETECTOR_DEGRADED: {error}", file=sys.stderr)
+
+
+def insert_run_alert(pipeline_run_id: str, source: str, status_name: str, run_key: str, detail: str, http_status: int | None) -> None:
+    if http_status is not None and not 200 <= http_status <= 299:
+        alert_type = "HTTP_FAILURE"
+    elif status_name == "NO_DATA":
+        alert_type = "NO_DATA"
+    elif status_name == "STALE":
+        alert_type = "STALE"
+    else:
+        alert_type = "FAILED"
+    record = {
+        "dedupe_key": f"run:{pipeline_run_id}:{alert_type}",
+        "pipeline_run_id": pipeline_run_id,
+        "source": source,
+        "alert_type": alert_type,
+        "severity": "WARNING" if status_name == "DEGRADED" else "CRITICAL",
+        "message": f"{source.upper()} pipeline {status_name}: {detail}"[:1500],
+        "metadata": {"run_key": run_key, "http_status": http_status},
+    }
+    status, _ = request_json(
+        f"{SUPABASE_URL}/rest/v1/pipeline_alerts?on_conflict=dedupe_key",
+        method="POST",
+        headers=supabase_headers("resolution=merge-duplicates,return=minimal"),
+        body=record,
+    )
+    if status not in range(200, 300):
+        raise RuntimeError(f"pipeline alert insert failed: HTTP {status}")
+
+
 def send_alert(source: str, status_name: str, run_key: str, detail: str) -> None:
     status, payload = request_json(
         ALERT_URL,
@@ -243,9 +278,11 @@ def execute(source: str) -> int:
                 "updated_at": utc_now(),
             }
             pipeline_run_id = upsert_run(final)
-            detect_alerts()
+            try_detect_alerts()
             if final_status == "DEGRADED":
-                send_alert(source, final_status, run_key, "Data arrived, but a post-write maintenance step failed")
+                detail = "Data arrived, but a post-write maintenance step failed"
+                insert_run_alert(pipeline_run_id, source, final_status, run_key, detail, result["http_status"])
+                send_alert(source, final_status, run_key, detail)
                 mark_source_alerts_delivered(source)
             print(json.dumps({"run_key": run_key, "pipeline_run_id": pipeline_run_id, "status": final_status, "attempts": attempt, "rows_written": result["rows_written"]}))
             return 0
@@ -269,7 +306,15 @@ def execute(source: str) -> int:
         "updated_at": utc_now(),
     }
     pipeline_run_id = upsert_run(final)
-    detect_alerts()
+    insert_run_alert(
+        pipeline_run_id,
+        source,
+        last_error.status,
+        run_key,
+        f"{last_error.code}: {last_error.detail}",
+        last_error.http_status,
+    )
+    try_detect_alerts()
     try:
         send_alert(source, last_error.status, run_key, f"{last_error.code}: {last_error.detail}")
         mark_source_alerts_delivered(source)

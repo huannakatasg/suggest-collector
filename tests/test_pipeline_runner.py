@@ -11,11 +11,12 @@ class PipelineRunnerTest(unittest.TestCase):
     @mock.patch.object(pipeline_runner, "time")
     @mock.patch.object(pipeline_runner, "mark_source_alerts_delivered")
     @mock.patch.object(pipeline_runner, "send_alert")
-    @mock.patch.object(pipeline_runner, "detect_alerts")
+    @mock.patch.object(pipeline_runner, "try_detect_alerts")
+    @mock.patch.object(pipeline_runner, "insert_run_alert")
     @mock.patch.object(pipeline_runner, "upsert_run", return_value="run-id")
     @mock.patch.object(pipeline_runner, "run_http_pipeline")
     def test_failure_retries_once_and_records_final_status(
-        self, run_http, upsert, _detect, _send, _mark, _time
+        self, run_http, upsert, insert_alert, _detect, _send, _mark, _time
     ):
         run_http.side_effect = pipeline_runner.PipelineFailure(
             "FAILED", "HTTP_503", "source is not configured", http_status=503
@@ -27,6 +28,14 @@ class PipelineRunnerTest(unittest.TestCase):
         self.assertEqual(final_record["status"], "FAILED")
         self.assertEqual(final_record["attempt_count"], 2)
         self.assertEqual(final_record["http_status"], 503)
+        insert_alert.assert_called_once_with(
+            "run-id",
+            "gsc",
+            "FAILED",
+            "gsc:github:123:1",
+            "HTTP_503: source is not configured",
+            503,
+        )
 
 
 if __name__ == "__main__":
