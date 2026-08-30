@@ -1,11 +1,23 @@
-name: Suggest Collector
+name: TGD Data Pipelines
 
 on:
   schedule:
     - cron: "30 0 * * *"   # ~07:30 giờ VN mỗi ngày
     - cron: "30 6 * * *"   # ~13:30 giờ VN mỗi ngày
-  workflow_dispatch:        # cho phép chạy tay (lần đầu nạp dữ liệu)
+    - cron: "30 21 * * *"  # GSC ~04:30 giờ VN mỗi ngày
+    - cron: "0 22 * * 0"   # SERP ~05:00 giờ VN sáng thứ Hai
+  workflow_dispatch:
     inputs:
+      pipeline:
+        description: "Pipeline to run"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - suggest
+          - gsc
+          - serp
       industries:
         description: "Comma-separated industries to collect"
         required: false
@@ -15,23 +27,74 @@ on:
         required: false
         default: "0.6"
 
-concurrency:
-  group: suggest-collector
-  cancel-in-progress: false
+permissions:
+  contents: read
 
 jobs:
-  collect:
+  suggest:
+    if: >-
+      (github.event_name == 'schedule' && (github.event.schedule == '30 0 * * *' || github.event.schedule == '30 6 * * *')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.pipeline == 'all' || inputs.pipeline == 'suggest'))
     runs-on: ubuntu-latest
     timeout-minutes: 330
+    concurrency:
+      group: tgd-pipeline-suggest
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Run collector
+      - name: Run Suggest with one retry and arrival proof
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PIPELINE_RUNNER_TOKEN: ${{ secrets.PIPELINE_RUNNER_TOKEN }}
+          TGD_BASE_URL: https://tgd-suggest.vercel.app
           INDUSTRIES: ${{ github.event.inputs.industries || 'food,realestate,hotel,water,produce,vegetarian' }}
           DELAY: ${{ github.event.inputs.delay || '0.6' }}
-        run: python collector.py
+        run: python pipeline_runner.py suggest
+
+  gsc:
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '30 21 * * *') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.pipeline == 'all' || inputs.pipeline == 'gsc'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    concurrency:
+      group: tgd-pipeline-gsc
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run GSC with one retry and arrival proof
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PIPELINE_RUNNER_TOKEN: ${{ secrets.PIPELINE_RUNNER_TOKEN }}
+          TGD_BASE_URL: https://tgd-suggest.vercel.app
+        run: python pipeline_runner.py gsc
+
+  serp:
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '0 22 * * 0') ||
+      (github.event_name == 'workflow_dispatch' && (inputs.pipeline == 'all' || inputs.pipeline == 'serp'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: tgd-pipeline-serp
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run SERP with one retry and arrival proof
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          PIPELINE_RUNNER_TOKEN: ${{ secrets.PIPELINE_RUNNER_TOKEN }}
+          TGD_BASE_URL: https://tgd-suggest.vercel.app
+        run: python pipeline_runner.py serp

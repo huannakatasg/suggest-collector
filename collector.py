@@ -111,6 +111,7 @@ def run_industry(ind):
 
 def main():
     total = 0
+    result = {"rows_written": 0, "rollup_ok": False, "prune_ok": False}
     for ind in INDUSTRIES:
         if ind not in seeds.INDUSTRIES:
             print(f"Bỏ qua ngành lạ: {ind}")
@@ -125,15 +126,20 @@ def main():
     except Exception as e:
         print("rollup lỗi:", e, "-> bỏ qua prune lần này cho an toàn")
         print(f"XONG. Tổng ghi {total} dòng.")
-        return
+        result["rows_written"] = total
+        return result
+    result["rollup_ok"] = True
     # dọn dữ liệu > 90 ngày
     try:
         pruned = rpc("suggest_prune", {"p_days": 90})
         print(f"prune: xoá {pruned} dòng cũ")
+        result["prune_ok"] = True
     except Exception as e:
         print("prune lỗi:", e)
     print(f"XONG. Tổng ghi {total} dòng.")
+    result["rows_written"] = total
+    return result
 
 
 if __name__ == "__main__":
-    main()
+    print("PIPELINE_RESULT=" + json.dumps(main(), ensure_ascii=False, separators=(",", ":")))
