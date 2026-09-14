@@ -1,0 +1,31 @@
+name: RTC-KW-02A Focused W2
+on:
+  push:
+    branches: [rtc-kw-02-materialization]
+    paths:
+      - 'rtc_kw02a_w2_fast.py'
+      - '.github/workflows/rtc-kw-02a-w2.yml'
+      - 'rtc_kw_02/rtc_seeds_compact.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  w2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run focused W2 rescue
+        env:
+          DELAY: '0.05'
+          MAX_SUGGEST: '10'
+        run: python rtc_kw02a_w2_fast.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtc-kw-02a-w2
+          path: rtc_kw_02a_w2_out/
+          retention-days: 7
