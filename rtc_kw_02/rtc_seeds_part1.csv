@@ -1,0 +1,50 @@
+seed_id,industry,keyword_goc,family_code,priority,rtc_fit,active,classifier_version
+RTC-SEED-001,rtc,thực phẩm sơ chế,RTC-01,P0,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-002,rtc,thực phẩm sơ chế sẵn,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-003,rtc,thực phẩm ready to cook,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-004,rtc,ready to cook,RTC-01,P0,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-005,rtc,ready-to-cook food,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-006,rtc,đồ ăn sơ chế sẵn,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-007,rtc,đồ ăn sẵn nấu,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-008,rtc,nguyên liệu sơ chế,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-009,rtc,nguyên liệu sơ chế sẵn,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-010,rtc,nguyên liệu nấu sẵn,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-011,rtc,nguyên liệu nấu ăn sơ chế sẵn,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-012,rtc,thực phẩm tiện lợi ready to cook,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-013,rtc,món ăn sơ chế sẵn,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-014,rtc,món ăn sẵn nấu,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-015,rtc,đồ nấu nhanh,RTC-01,P1,RTC_ADJACENT,TRUE,rtc-ontology-v1.0
+RTC-SEED-016,rtc,món nấu nhanh,RTC-01,P1,RTC_ADJACENT,TRUE,rtc-ontology-v1.0
+RTC-SEED-017,rtc,meal kit,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-018,rtc,meal kit việt nam,RTC-01,P1,RTC_ADJACENT,TRUE,rtc-ontology-v1.0
+RTC-SEED-019,rtc,set nguyên liệu nấu ăn,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-020,rtc,combo nguyên liệu nấu ăn,RTC-01,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-021,rtc,thực phẩm làm sạch sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-022,rtc,thực phẩm rửa sạch sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-023,rtc,rau củ làm sạch sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-024,rtc,rau củ rửa sạch sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-025,rtc,rau nhặt sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-026,rtc,rau rửa sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-027,rtc,củ gọt sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-028,rtc,rau củ gọt sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-029,rtc,rau củ cắt sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-030,rtc,rau củ thái sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-031,rtc,rau củ cắt khúc sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-032,rtc,rau củ cắt hạt lựu,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-033,rtc,rau củ cắt sợi,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-034,rtc,rau củ bào sợi,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-035,rtc,thịt cắt sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-036,rtc,thịt thái lát sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-037,rtc,thịt xay sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-038,rtc,thịt băm sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-039,rtc,thủy sản làm sạch sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-040,rtc,thủy sản cắt khúc sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-041,rtc,thủy sản fillet sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-042,rtc,tôm sơ chế sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-043,rtc,tôm sơ chế bóc vỏ rút chỉ,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-044,rtc,hải sản sơ chế theo yêu cầu,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-045,rtc,thực phẩm tẩm ướp sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-046,rtc,thịt ướp sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-047,rtc,thực phẩm chia phần sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-048,rtc,thực phẩm đóng khay sẵn,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
+RTC-SEED-049,rtc,thực phẩm hút chân không ready to cook,RTC-02,P1,STRICT_RTC,TRUE,rtc-ontology-v1.0
