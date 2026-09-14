@@ -1,0 +1,32 @@
+name: RTC-KW-02A Fast W1
+on:
+  push:
+    branches: [rtc-kw-02-materialization]
+    paths:
+      - 'rtc_kw02a_fast.py'
+      - '.github/workflows/rtc-kw-02a-fast.yml'
+      - 'rtc_kw_02/rtc_seeds_compact.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fast-w1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run concurrent W1 expansion probe
+        env:
+          WORKERS: '8'
+          DELAY: '0.05'
+          MAX_SUGGEST: '10'
+        run: python rtc_kw02a_fast.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtc-kw-02a-fast-w1
+          path: rtc_kw_02a_fast_out/
+          retention-days: 7
