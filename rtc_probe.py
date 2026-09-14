@@ -3,7 +3,7 @@
 Reads the 290 canonical RTC seeds, calls Google Suggest, and writes local artifacts.
 NO Supabase writes. Safe to run on an isolated branch/action.
 """
-import csv, glob, json, os, time, urllib.parse, urllib.request
+import csv, json, os, time, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,11 +37,11 @@ def norm(s):
 
 
 def load_seeds():
+    data=json.loads(Path('rtc_kw_02/rtc_seeds_compact.json').read_text(encoding='utf-8'))
     rows=[]
-    for p in sorted(glob.glob('rtc_kw_02/rtc_seeds_part*.csv')):
-        with open(p,encoding='utf-8-sig',newline='') as f:
-            for r in csv.DictReader(f):
-                if str(r.get('active','')).upper()=='TRUE': rows.append(r)
+    for seed_id,keyword,family,priority,rtc_fit in data:
+        rows.append({'seed_id':seed_id,'keyword_goc':keyword,'family_code':family,
+                     'priority':priority,'rtc_fit':rtc_fit,'classifier_version':'rtc-ontology-v1.0'})
     seen=set(); out=[]
     for r in rows:
         k=norm(r['keyword_goc'])
