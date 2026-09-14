@@ -13,8 +13,6 @@ on:
 permissions:
   contents: read
 
-tasks: {}
-
 jobs:
   rtc-kw-02a:
     runs-on: ubuntu-latest
