@@ -1,0 +1,37 @@
+name: RTC-KW-02A Closure Probe
+
+on:
+  push:
+    branches:
+      - rtc-kw-02-materialization
+    paths:
+      - 'rtc_kw02a_probe.py'
+      - '.github/workflows/rtc-kw-02a-probe.yml'
+      - 'rtc_kw_02/rtc_seeds_compact.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+tasks: {}
+
+jobs:
+  rtc-kw-02a:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run RTC-KW-02A evidence-only closure
+        env:
+          DELAY: '0.18'
+          MAX_SUGGEST: '10'
+        run: python rtc_kw02a_probe.py
+      - name: Upload RTC-KW-02A artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtc-kw-02a-zero-gap-closure
+          path: rtc_kw_02a_out/
+          retention-days: 7
