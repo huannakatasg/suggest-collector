@@ -1,0 +1,37 @@
+name: RTC-KW-02 Suggest Probe
+
+on:
+  push:
+    branches:
+      - rtc-kw-02-materialization
+    paths:
+      - 'rtc_probe.py'
+      - 'rtc_kw_02/**'
+      - '.github/workflows/rtc-kw-02-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  rtc-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Collect RTC Google Suggest evidence only
+        env:
+          DELAY: '0.25'
+          MAX_SUGGEST: '10'
+          HL: 'vi'
+          GL: 'vn'
+        run: python rtc_probe.py
+      - name: Upload RTC-KW-02 evidence artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtc-kw-02-suggest-materialization
+          path: rtc_kw_02_out/
+          if-no-files-found: error
+          retention-days: 7
