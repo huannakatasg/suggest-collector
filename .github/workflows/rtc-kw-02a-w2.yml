@@ -29,3 +29,4 @@ jobs:
           name: rtc-kw-02a-w2
           path: rtc_kw_02a_w2_out/
           retention-days: 7
+# trigger 2
