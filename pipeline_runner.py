@@ -231,7 +231,9 @@ def run_http_pipeline(source: str) -> dict:
         expected = None
         summaries = []
         http_status = 200
-        for industry in ("hotel", "food", "water", "realestate"):
+        # hotel, water, realestate tắt 17/09/2026 (chủ DN chưa dùng) — ngừng quét SERP để dành quota SerpAPI.
+        # Bật lại: thêm key vào tuple này + INDUSTRIES trong collect.yml + ACTIVE_INDUSTRIES ở app.
+        for industry in ("food",):
             query = urllib.parse.urlencode({"industry": industry})
             part_status, payload = request_json(
                 f"{TGD_BASE_URL}{endpoint}?{query}",
