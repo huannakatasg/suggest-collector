@@ -15,7 +15,7 @@ import unittest
 import classify
 import seeds
 
-LABELS = {"Brand", "Chain", "B2B", "Wholesale", "Gift", "Worship", "Delivery", "Store", "Pricing",
+LABELS = {"Brand", "Chain", "B2B", "Wholesale", "Gift", "Worship", "Party", "Delivery", "Store", "Pricing",
           "Trust", "Health", "Product", "Local", "Imported", "Core", "Other"}
 
 # (gợi ý thật, nhãn kỳ vọng) — nhiều ca chọn ở ĐƯỜNG BIÊN giữa hai nhánh để khóa thứ tự nhánh
@@ -35,6 +35,13 @@ LABEL_CASES = [
     ("xuất hóa đơn giỏ trái cây thuế suất bao nhiêu", "B2B"),
     ("trái cây tiệc teabreak", "B2B"),
     ("cung cấp trái cây cho quán cafe", "B2B"),
+    # Định nghĩa B2B chủ DN chốt 17/09/2026: tiệc gia đình → Party; thuế suất nhập khẩu → Wholesale
+    ("trái cây tiệc cưới", "Party"),
+    ("dĩa trái cây đãi tiệc", "Party"),
+    ("trái cây tiệc buffet", "Party"),
+    ("trái cây bày tiệc", "Party"),
+    ("hoa quả nhập khẩu thuế suất bao nhiêu", "Wholesale"),
+    ("trái cây nhập khẩu chịu thuế gtgt bao nhiêu", "Wholesale"),
     # Wholesale — sỉ / đầu mối / nhà nhập khẩu; bắt trước Pricing và Store
     ("giá trái cây chợ đầu mối thủ đức hôm nay", "Wholesale"),
     ("trái cây nhập khẩu giá sỉ tphcm", "Wholesale"),
@@ -103,10 +110,10 @@ LABEL_CASES = [
     ("trai cay ngoai nhap", "Imported"),
     ("trái cây mỹ nhập khẩu", "Imported"),
     ("trái cây nhập", "Imported"),
-    # Core — "sinh nhật" không được đọc thành xuất xứ "nhật"
+    # Core; và "sinh nhật" không được đọc thành xuất xứ "nhật" — là dịp tiệc → Party (chốt 17/09/2026)
     ("các loại trái cây", "Core"),
     ("trái cây hữu cơ", "Core"),
-    ("trái cây sinh nhật", "Core"),
+    ("trái cây sinh nhật", "Party"),
     # Other — không có ngữ cảnh trái cây (rác đồng âm lọt lưới)
     ("biên hòa đồng nai", "Other"),
     ("giao hàng hoả tốc hà nội quảng ninh", "Other"),
@@ -156,7 +163,7 @@ AUDIT_LABEL_CASES = [
     ("trái cây cúng đám tang", "Worship"),                    # CSV
     # "cho bé" sau dịp lễ không phải dinh dưỡng
     ("mâm trái cây trung thu cho bé", "Core"),                # OOS
-    ("trái cây sinh nhật cho bé", "Core"),                    # CSV
+    ("trái cây sinh nhật cho bé", "Party"),                   # CSV — Health không nuốt; dịp tiệc (chốt 17/09)
     ("trái cây cho bé ăn dặm", "Health"),                     # CSV — không đổi
     # Nhu cầu mua trước đây bị lọc nhầm
     ("trái cây nhà trồng", "Core"),                           # OOS ("trồng")
@@ -216,7 +223,7 @@ KEEP_CASES = [
     "nho kẹo nhập khẩu",                           # "kẹo" nhưng là giống nho
     "an nhiên fruits trái cây bánh kẹo nhập khẩu vũng tàu",
     "trái cây cúng quay phim",                     # "phim" nhưng là cúng khai máy
-    "hoa quả nhập khẩu thuế suất bao nhiêu",       # kế toán doanh nghiệp → B2B
+    "hoa quả nhập khẩu thuế suất bao nhiêu",       # tình báo nhập khẩu → Wholesale (chốt 17/09)
     "trái cây cho người tiểu đường",               # sức khỏe → Health, không lọc
     "cửa hàng trái cây xuất khẩu",                 # hàng loại xuất khẩu bán lẻ
     "trái cây sấy dẻo giá sỉ",                     # đồ sấy là mặt hàng
@@ -267,7 +274,19 @@ class FruitClassifierTest(unittest.TestCase):
                 "cung cấp trái cây cho trường mầm non": "B2B",
                 "trái cây nhập khẩu tuyển chọn": "Imported",
                 "giỏ trái cây thiết kế theo yêu cầu": "Gift",
-                "táo mỹ 1 kg giá bao nhiêu": "Pricing"}
+                "táo mỹ 1 kg giá bao nhiêu": "Pricing",
+                # Định nghĩa B2B chủ DN chốt 17/09/2026 + soát độc lập cùng ngày (chuỗi TỰ ĐẶT):
+                # tiệc của TỔ CHỨC vẫn B2B; tiệc gia đình → Party; hỏi thuế/VAT nhập khẩu → Wholesale.
+                "trái cây tiệc cty": "B2B",
+                "trái cây tiệc year end công ty quận 7": "B2B",
+                "trái cây tiệc tất niên": "B2B",
+                "trai cay tiec cong ty": "B2B",
+                "trái cây có xuất vat không": "B2B",
+                "hoa quả nhập khẩu vat bao nhiêu": "Wholesale",
+                "cửa hàng miễn thuế trái cây": "Store",
+                "trai cay tiec cuoi": "Party",
+                "trái cây party": "Party",
+                "mâm ngũ quả bày trước hay sau cúng tất niên": "Worship"}
         for text, expected in keep.items():
             with self.subTest(text=text):
                 self.assertFalse(classify.fruit_is_negative(text))

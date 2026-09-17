@@ -274,7 +274,10 @@ _FRUIT_THEM_DAU = [(re.compile(a), b) for a, b in [
     (r"\bthu duc\b", "thủ đức"), (r"\btan binh\b", "tân bình"), (r"\btan phu\b", "tân phú"), (r"\bphu nhuan\b", "phú nhuận"),
     (r"\bbinh tan\b", "bình tân"), (r"\bda nang\b", "đà nẵng"), (r"\bhai phong\b", "hải phòng"), (r"\bcan tho\b", "cần thơ"),
     (r"\bbien hoa\b", "biên hòa"), (r"\bvung tau\b", "vũng tàu"), (r"\bbinh duong\b", "bình dương"),
-    (r"\bsinh nhat\b", "sinh nhật"), (r"\bthuy anh\b", "thủy anh"), (r"\btrang bom\b", "trảng bom"),
+    (r"\bsinh nhat\b", "sinh nhật"), (r"\bdai tiec\b", "đãi tiệc"), (r"\btiec\b", "tiệc"),
+    (r"\bcong ty\b", "công ty"), (r"\bco quan\b", "cơ quan"), (r"\bvan phong\b", "văn phòng"),
+    (r"\bhoa don\b", "hóa đơn"), (r"\bnhan vien\b", "nhân viên"), (r"\btat nien\b", "tất niên"),
+    (r"\bdam cuoi\b", "đám cưới"), (r"\ble cuoi\b", "lễ cưới"), (r"\bthuy anh\b", "thủy anh"), (r"\btrang bom\b", "trảng bom"),
 ]]
 
 
@@ -313,12 +316,27 @@ _FRUIT_CHAIN = re.compile(
 # theoMatTran goc SI_B2B). Chính vì hiếm nên bắt
 # SỚM NHẤT sau tên riêng: một lần xuất hiện cũng đáng thấy, không được để Gift/Worship nuốt
 # ("giỏ trái cây tặng doanh nghiệp", "trái cây cúng khai trương công ty", "trái cây cúng văn phòng mới").
-# "thuế/hoá đơn": "xuất hóa đơn giỏ trái cây thuế suất bao nhiêu" = kế toán doanh nghiệp đang mua.
+# "hoá đơn": "xuất hóa đơn giỏ trái cây thuế suất bao nhiêu" = kế toán doanh nghiệp đang mua.
+# ĐỊNH NGHĨA CHỦ DOANH NGHIỆP CHỐT 17/09/2026 (classifier sau af84344): B2B = TỔ CHỨC mua — công ty, văn phòng,
+# nhà hàng, khách sạn, trường học, café, sự kiện/teabreak, hoá đơn doanh nghiệp. KHÔNG còn gồm:
+#   · "tiệc" / "buffet" trần — tiệc gia đình ("trái cây tiệc cưới / tiệc trà / đãi tiệc / bày tiệc", CSV 17/09)
+#     → nhãn Party. Tiệc của tổ chức vẫn B2B: teabreak, "tiệc/liên hoan/tất niên công ty|cơ quan" ("tất niên"
+#     trần KHÔNG: "mâm ngũ quả bày trước hay sau cúng tất niên" là cúng tại nhà → Worship).
+#   · "thuế" trần — "hoa quả nhập khẩu (chịu) thuế suất bao nhiêu", "…chịu thuế gtgt" là tình báo nhập khẩu /
+#     quy định → Wholesale. Có "hoá đơn" thì vẫn B2B (bắt trước Wholesale).
 _FRUIT_B2B = re.compile(
     r"(văn phòng|doanh nghiệp|\bcho (công ty|nhân viên|đối tác|khách hàng)\b|công ty mới|"
-    r"khai trương công ty|công ty\s*$|teabreak|tea break|buffet|hội nghị|hội thảo|sự kiện|\bevent\b|"
-    r"tiệc|nhà hàng|khách sạn|\bcafe\b|cà phê|canteen|căn tin|trường học|trường (mầm non|mẫu giáo)|bếp ăn|horeca|"
-    r"h(óa|oá) đơn|\bvat\b|thuế)")
+    r"khai trương công ty|công ty\s*$|\bcty\b|teabreak|tea break|"
+    # tiệc CỦA TỔ CHỨC (soát độc lập 17/09): cho phép 0–3 chữ chen giữa ("tiệc year end công ty quận 7"),
+    # và các loại tiệc gần như luôn của công ty: tất niên/tân niên/year end/gala/tri ân/tổng kết/nhân viên.
+    # "cúng tất niên" (không có chữ tiệc) vẫn là Worship.
+    # "gala" CHỈ khi là tiệc: "giá táo gala new zealand" (CSV 17/09) là GIỐNG táo Gala → Pricing.
+    r"(tiệc|liên hoan|tất niên)( \S+){0,3} (công ty|cty|cơ quan)|tiệc tất niên|tân niên|year ?end|tiệc gala|gala dinner|"
+    r"tri ân|tổng kết|nhân viên|"
+    r"hội nghị|hội thảo|sự kiện|\bevent\b|"
+    r"nhà hàng|khách sạn|\bcafe\b|cà phê|canteen|căn tin|trường học|trường (mầm non|mẫu giáo)|bếp ăn|horeca|"
+    # VAT chỉ là tổ chức mua khi đòi XUẤT hoá đơn; "hoa quả nhập khẩu vat bao nhiêu" là hỏi thuế → Wholesale.
+    r"h(óa|oá) đơn|xuất vat|có vat)")
 
 # Wholesale = mua để BÁN LẠI / nguồn hàng: sỉ, vựa, kho, chợ đầu mối, nhà nhập khẩu, nhà cung cấp.
 # Tách khỏi B2B vì là mặt trận khác hẳn và CÒN SỐNG trên Suggest: "giá trái cây chợ đầu mối thủ đức
@@ -334,7 +352,11 @@ _FRUIT_WHOLESALE = re.compile(
     r"nông sản|tại vườn|thương lái|"
     # nhà nhập khẩu lộ ra trong Suggest 17/09 ("công ty nhập khẩu trái cây an minh / homefarm / biovegi…")
     r"\ban minh\b|homefarm|biovegi|chánh thu|phương sinh|sức sống xanh|phong gia|\batf\b|farm fruits|"
-    r"\bgia huy\b|\bcevis\b)")
+    r"\bgia huy\b|\bcevis\b|"
+    # Tình báo NHẬP KHẨU / QUY ĐỊNH (chủ DN chốt 17/09/2026, trước đây nằm trong B2B): thuế suất, thuế GTGT,
+    # hải quan, mã HS — người hỏi là bên nhập/bán hàng, không phải tổ chức mua để dùng.
+    # "miễn thuế" (cửa hàng miễn thuế sân bay) không phải tình báo nhập khẩu.
+    r"(?<!miễn )thuế|\bgtgt\b|\bvat\b|hải quan|mã hs\b|\bhs code\b)")
 
 # Gift = giỏ/hộp/quà/biếu/viếng — mặt trận QUA: sâu nhất và gần như toàn ý định giao dịch
 # (seed gốc TB 7,6 gợi ý, 0 seed rỗng; alphabet soup TB 8,3 — cao nhất). Bắt TRƯỚC Worship vì
@@ -358,10 +380,17 @@ _FRUIT_WORSHIP = re.compile(
     r"ông công|gia tiên|cô hồn|giao thừa|\bchưng\b|\brằm\b|mùng 1\b|mồng 1\b|\bvía\b|đầy tháng|thôi nôi|"
     r"phật(?! thủ)|chùa(?! láng| bộc)|bà chúa xứ|quan âm|trả lễ|động thổ|nhập trạch)")
 
-# KHÔNG có nhãn Occasion riêng (đã thử và bỏ, 17/09/2026): chỉ 6/3.607 gợi ý giữ lại mang dịp mà KHÔNG
-# kèm giỏ/quà hoặc cúng ("giá trái cây tết", "trái cây sinh nhật") — không đủ thành mặt trận. Dịp thật
-# nằm TRONG Gift (giỗ/tang 61 gợi ý, Tết 46, khai trương 33…) và Worship (thần tài 26, rằm/mùng 1 22);
-# bảng điều khiển tách dịp từ chuỗi gợi ý khi cần lịch mùa vụ (Trung thu 25/09/2026, Tết 06/02/2027).
+# KHÔNG có nhãn Occasion chung (đã thử và bỏ, 17/09/2026): chỉ 6/3.607 gợi ý giữ lại mang dịp mà KHÔNG
+# kèm giỏ/quà hoặc cúng ("giá trái cây tết") — không đủ thành mặt trận. Dịp thật nằm TRONG Gift
+# (giỗ/tang 61 gợi ý, Tết 46, khai trương 33…) và Worship (thần tài 26, rằm/mùng 1 22).
+#
+# Party = TIỆC / đãi khách của gia đình (chủ doanh nghiệp chốt 17/09/2026, tách khỏi B2B): "trái cây tiệc cưới",
+# "trái cây tiệc trà", "trái cây đãi tiệc", "dĩa trái cây đãi tiệc", "trái cây bày tiệc", "trái cây tiệc buffet"
+# (CSV 17/09 — trước đây các dòng này bị tính là tổ chức mua). Cùng radar "Quà & dịp" với Gift/Worship ở app.
+# Đứng SAU B2B (tiệc công ty/teabreak vẫn là tổ chức), SAU Gift ("giỏ trái cây sinh nhật" là mua giỏ) và
+# Worship, TRƯỚC Delivery ("đặt trái cây tiệc giao tận nơi" — ý định chính là tiệc).
+_FRUIT_PARTY = re.compile(
+    r"(tiệc|buffet|đãi khách|liên hoan|sinh nhật|đám cưới|lễ cưới|\bparty\b)")
 
 # Delivery = giao/ship/online/app. Mặt trận ONLINE MỎNG (seed gốc TB 5,2; alphabet 11/31 rỗng).
 # "giao" dễ dính: "giao thừa" (Worship đã bắt trước) và địa danh "Ngãi Giao" → loại bằng lookaround.
@@ -397,7 +426,7 @@ _FRUIT_TRUST = re.compile(
 # Health = dinh dưỡng / bệnh lý. Tín hiệu NỘI DUNG, không phải ý định mua (mặt trận SUCKHOE: 10/10 seed
 # đủ 10 gợi ý nhưng không có gợi ý nào mang ý định giao dịch) — giữ để làm SEO, xếp sau mọi nhánh ra tiền.
 # "cho bé" sau dịp lễ là mâm cỗ/tiệc, không phải dinh dưỡng: "mâm trái cây trung thu cho bé" (ngoài mẫu),
-# "trái cây sinh nhật cho bé" (CSV) → rơi về Core.
+# "trái cây sinh nhật cho bé" (CSV) → nay là Party (nhãn tiệc thêm 17/09, xét trước Health).
 _FRUIT_HEALTH = re.compile(
     r"(giảm cân|bà bầu|mẹ bầu|\bbầu\b|sau sinh|thai kỳ|tiểu đường|huyết áp|\bcalo\b|vitamin|dinh dưỡng|"
     r"sức kh[oỏ]e|sức khoẻ|tốt cho|ít đường|nhiều đường|ăn kiêng|\bkali\b|bổ máu|"
@@ -485,7 +514,7 @@ def classify_fruit(s: str) -> str:
 
     Thứ tự nhánh từ HẸP & ra tiền → RỘNG (nhánh trước thắng):
       [chuỗi ASCII có "trai cay|hoa qua" → thêm dấu cụm cố định, xem _FRUIT_THEM_DAU]
-      Brand → Chain → [không có ngữ cảnh trái cây → Other] → B2B → Wholesale → Gift → Worship
+      Brand → Chain → [không có ngữ cảnh trái cây → Other] → B2B → Wholesale → Gift → Worship → Party
       → Delivery → Store → Pricing → Health → Trust → Product → Local → Imported (đuôi Maps → Local/Store) → Core
       · Brand/Chain: tên riêng là tín hiệu hẹp nhất — người gõ đã chọn nơi mua. Chain đo thị phần nhu cầu.
         Đứng TRƯỚC cửa chặn ngữ cảnh vì "klever fruit lê văn sỹ", "hoa biển gò vấp" không có chữ "trái cây".
@@ -502,8 +531,8 @@ def classify_fruit(s: str) -> str:
       · Local trước Imported: "trái cây nhập khẩu gò vấp" — địa bàn là thông tin hành động được
         (mở điểm/chạy ads theo quận); gần như MỌI seed đều chứa "nhập khẩu" nên Imported để làm lưới đỡ.
 
-    16 nhãn: Brand, Chain, B2B, Wholesale, Gift, Worship, Delivery, Store, Pricing, Trust,
-    Health, Product, Local, Imported, Core, Other."""
+    17 nhãn: Brand, Chain, B2B, Wholesale, Gift, Worship, Party, Delivery, Store, Pricing, Trust,
+    Health, Product, Local, Imported, Core, Other. (Party thêm 17/09/2026 khi chủ DN chốt định nghĩa B2B.)"""
     t = _fruit_them_dau(_fruit_norm(s))
     # Brand KHÔNG nhận "đồng khởi" trần: Đồng Khởi là tên đường dày cửa hàng (Q1, Biên Hòa, Bến Tre) —
     # "cửa hàng trái cây đồng khởi quận 1" là tìm cửa hàng, không phải tìm Đồng Khởi Catering.
@@ -522,6 +551,8 @@ def classify_fruit(s: str) -> str:
         return "Gift"
     if _FRUIT_WORSHIP.search(t):
         return "Worship"
+    if _FRUIT_PARTY.search(t):
+        return "Party"
     if _FRUIT_DELIVERY.search(t):
         return "Delivery"
     if _FRUIT_STORE.search(t):
@@ -656,8 +687,8 @@ def fruit_is_negative(s: str) -> bool:
     Lọc chỉ áp trên chuỗi đã chuẩn hoá (chưa thêm dấu): nhiễu gõ không dấu hiếm và không được đo riêng.
     % Other của classify_fruit chỉ đếm gợi ý KHÔNG có chữ trái cây → là CẬN DƯỚI của nhiễu còn sót; nhiễu có
     ngữ cảnh trái cây (kiểu nhóm 10 trước khi thêm) không hiện trong Other — soát bằng mắt định kỳ.
-    KHÔNG lọc (có chủ đích): sức khỏe/dinh dưỡng (→ Health, tín hiệu nội dung), thuế/hóa đơn (→ B2B,
-    kế toán doanh nghiệp đang mua), an toàn/tem mã số (→ Trust), ý nghĩa/phong thủy mâm ngũ quả
+    KHÔNG lọc (có chủ đích): sức khỏe/dinh dưỡng (→ Health, tín hiệu nội dung), hóa đơn (→ B2B,
+    kế toán doanh nghiệp đang mua), thuế suất/hải quan (→ Wholesale, tình báo nhập khẩu), an toàn/tem mã số (→ Trust), ý nghĩa/phong thủy mâm ngũ quả
     (→ Worship), đồ sấy/mứt (→ Product, hợp giỏ quà Tết), "cửa hàng trái cây xuất khẩu" (hàng loại xuất
     khẩu bán lẻ trong nước), siêu thị (→ Chain, đối thủ), đuôi "…ảnh" của Maps (vẫn là nhu cầu tìm cửa hàng)."""
     return bool(_FRUIT_NEGATIVE.search(_fruit_norm(s)))

@@ -555,11 +555,16 @@ def seeds_fruit():
     #     Bỏ: khách sạn/sự kiện/trường học/có hóa đơn (0), "trái cây tiệc teabreak/buffet", "…cho quán cafe",
     #     "trái cây cúng khai trương công ty/văn phòng mới" (đều 1 — con của "trái cây tiệc", "cung cấp trái
     #     cây", alphabet "trái cây cúng k/v").
-    b2b=[("trái cây tiệc",10),("trái cây xuất hóa đơn",3),("trái cây văn phòng",2),("xuất hóa đơn giỏ trái cây",2),
+    #     "trái cây tiệc" (10) chuyển sang nhom Party 17/09/2026: chủ DN chốt tiệc gia đình KHÔNG phải tổ chức mua.
+    b2b=[("trái cây xuất hóa đơn",3),("trái cây văn phòng",2),("xuất hóa đơn giỏ trái cây",2),
          # cờ canh
          ("trái cây cho văn phòng",0),("cung cấp trái cây cho công ty",0),("quà tặng trái cây doanh nghiệp",0),
          ("trái cây cắt sẵn văn phòng",0),("cung cấp trái cây cho nhà hàng",1),("giỏ trái cây tặng doanh nghiệp",1)]
     for x,_ in b2b: r.append((x,"B2B"))
+    # 10b) TIỆC — tiệc gia đình / đãi khách (radar "Quà & dịp" ở app). Seed mẹ "trái cây tiệc" trả 10 gợi ý
+    #      17/09: tiệc cưới, tiệc trà, đãi tiệc, bày tiệc, buffet… (teabreak trong đó vẫn phân loại B2B).
+    party=[("trái cây tiệc",10)]
+    for x,_ in party: r.append((x,"Party"))
 
     # 11) MẶT HÀNG — luôn kèm "nhập khẩu"/xuất xứ/"giá"; không để tên một chữ trần (đồng âm, xem docstring).
     #     Lộ ra nhiều nhất: đồ sấy 43 gợi ý, rồi chuối, xoài, dừa, cherry, táo (envy, rockit, gala NZ, fuji Nam
