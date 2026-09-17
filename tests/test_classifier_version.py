@@ -7,7 +7,7 @@ import classify
 class ClassifierVersionTest(unittest.TestCase):
     def test_version_is_exact_classifier_git_revision(self):
         self.assertRegex(classify.CLASSIFIER_VERSION, r"^classify-[0-9a-f]{7,40}$")
-        self.assertEqual(classify.CLASSIFIER_VERSION, "classify-af84344")
+        self.assertEqual(classify.CLASSIFIER_VERSION, "classify-5526c9e")
 
 
 if __name__ == "__main__":

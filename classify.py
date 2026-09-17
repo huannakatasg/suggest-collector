@@ -5,7 +5,7 @@ import unicodedata
 
 # Update this only when classifier logic changes. Operational-only commits do
 # not create a new classifier boundary.
-CLASSIFIER_VERSION = "classify-af84344"
+CLASSIFIER_VERSION = "classify-5526c9e"
 
 
 def is_english(s: str) -> bool:
