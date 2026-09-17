@@ -8,7 +8,10 @@ ENV bắt buộc (đặt ở GitHub Secrets):
   SUPABASE_URL                 vd https://xxxx.supabase.co
   SUPABASE_SERVICE_ROLE_KEY    service_role key (KHÔNG public)
 ENV tùy chọn:
-  INDUSTRIES=food,realestate,hotel,water   (mặc định cả 4)
+  INDUSTRIES=food,realestate,hotel,water   (mặc định khi thiếu ENV; lịch chạy thật đặt INDUSTRIES
+                                            trong .github/workflows/collect.yml)
+                                            Ngành có seed/classifier: food, realestate, hotel, water,
+                                            produce, vegetarian, fruit
   DELAY=0.6                            giây giữa các request (an toàn)
   MAX_SUGGEST=10
 """

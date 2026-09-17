@@ -2,11 +2,14 @@
 
 Bộ thu thập Google Suggest chạy **miễn phí trên GitHub Actions** (không còn giới hạn 6 phút của
 Apps Script), ghi thẳng vào **Supabase (PostgreSQL)**. Hỗ trợ ~2.000–2.800 seed/ngành cho các
-ngành (cơm / BĐS / khách sạn / nước uống văn phòng) — mỗi ngày bung ra hàng chục nghìn gợi ý thật.
+ngành (cơm / BĐS / khách sạn / nước uống văn phòng / rau củ B2B / món chay Mộc An / trái cây) — mỗi
+ngày bung ra hàng chục nghìn gợi ý thật. Ngành nào thực sự được cào do `INDUSTRIES` trong
+`.github/workflows/collect.yml` quyết định.
 
 ## File trong thư mục này
-- `seeds.py` — ma trận hoán vị seed cho 4 ngành (food / realestate / hotel / water).
-- `classify.py` — phân loại intent + lọc negative (port từ Apps Script).
+- `seeds.py` — seed cho 7 ngành (food / realestate / hotel / water / produce / vegetarian / fruit).
+- `classify.py` — phân loại intent + lọc negative theo ngành (`CLASSIFIERS`, `NEGATIVE`).
+- `tests/` — `python -m unittest discover -s tests -v` (gồm `test_fruit.py` trên gợi ý thật đo 17/09/2026).
 - `collector.py` — cào Suggest từng seed → ghi Supabase qua RPC.
 - `.github/workflows/collect.yml` — lịch chạy 2 cữ/ngày (7:30 & 13:30 VN) + chạy tay.
 - `supabase_schema.sql` — toàn bộ DDL đã áp lên Supabase (để tham khảo/khôi phục).
@@ -39,7 +42,7 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 
 ### 4. Chạy lần đầu (nạp dữ liệu ngay)
 Repo → tab **Actions** → workflow **Suggest Collector** → **Run workflow**.
-Lần đầu chạy ~60–120 phút (cào toàn bộ 4 ngành). Xem log để theo dõi.
+Lần đầu chạy ~60–120 phút (cào mọi ngành trong `INDUSTRIES`). Xem log để theo dõi.
 Có thể chạy riêng ngành nước bằng **Run workflow** với input `industries=water`.
 
 Từ đó, workflow tự chạy **7:30 và 13:30 giờ VN mỗi ngày**.

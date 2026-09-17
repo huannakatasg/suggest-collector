@@ -21,7 +21,7 @@ on:
       industries:
         description: "Comma-separated industries to collect"
         required: false
-        default: "food,produce,vegetarian"
+        default: "food,produce,vegetarian,fruit"
       delay:
         description: "Delay between suggest requests"
         required: false
@@ -51,7 +51,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           PIPELINE_RUNNER_TOKEN: ${{ secrets.PIPELINE_RUNNER_TOKEN }}
           TGD_BASE_URL: https://tgd-suggest.vercel.app
-          INDUSTRIES: ${{ github.event.inputs.industries || 'food,produce,vegetarian' }}
+          INDUSTRIES: ${{ github.event.inputs.industries || 'food,produce,vegetarian,fruit' }}
           DELAY: ${{ github.event.inputs.delay || '0.6' }}
         run: python pipeline_runner.py suggest
 
