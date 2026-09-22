@@ -694,8 +694,179 @@ def fruit_is_negative(s: str) -> bool:
     return bool(_FRUIT_NEGATIVE.search(_fruit_norm(s)))
 
 
+
+# ─────────────────── RTC (thực phẩm sơ chế / Ready-to-Cook) ───────────────────
+# Thêm 22/09/2026. 14 nhãn, mỗi nhãn nối thẳng tới một view chủ DN yêu cầu (xem seeds_rtc).
+# Từ vựng trạng thái sơ chế lấy nguyên cột `prep_type` của suggest.rtc_keywords (24 giá trị,
+# đo 22/09) — không tự nghĩ ra cách sơ chế nào không có trong bộ nghiên cứu.
+
+# Chuẩn hoá ĐẶT DẤU trước khi khớp regex. Tiếng Việt có HAI kiểu đặt dấu đều hợp lệ trên cùng
+# một chữ: "hòa/hoà", "húy/huý", "khỏe/khoẻ". Google Suggest trả kiểu nào là do người dùng gõ.
+# Đo thật 22/09/2026: kho Suggest có "khoai tây cắt sẵn bách ho|á| xanh" còn chuỗi bán lẻ tự viết
+# "bách h|ó|a xanh" — không chuẩn hoá thì mẫu Retailer trượt và gợi ý dò-đối-thủ bị đếm thành RTC.
+_RTC_DAU = [("oà", "òa"), ("oá", "óa"), ("oả", "ỏa"), ("oã", "õa"), ("oạ", "ọa"),
+            ("oè", "òe"), ("oé", "óe"), ("oẻ", "ỏe"), ("oẽ", "õe"), ("oẹ", "ọe"),
+            ("uỳ", "ùy"), ("uý", "úy"), ("uỷ", "ủy"), ("uỹ", "ũy"), ("uỵ", "ụy")]
+
+
+def _rtc_norm(s: str) -> str:
+    t = unicodedata.normalize("NFC", s or "").lower()
+    for a, b in _RTC_DAU:
+        t = t.replace(a, b)
+    return t
+
+
+# Cách nấu xuất hiện trong tên món — dùng để nhận "đây là một MÓN", không phải danh mục.
+# Rút từ 592 tên món thật của public.menu_items, không phải từ điển chung.
+_RTC_CACH_NAU = (
+    r"(kho|xào|chiên|nướng|hấp|luộc|rim|ram|rang|khìa|hầm|tiềm|áp chảo|sốt|cuốn|cuộn|trộn|gỏi|nộm|"
+    r"nấu|đút lò|lúc lắc|xíu|xá xíu|ngâm|bóp|chưng|đúc|giả cày|giả cầy|roti|lagu|cà ri|kho tộ|"
+    # Kiểu chế biến không có động từ nhiệt: "bò cuộn mỡ chài", "khổ qua nhồi thịt", "thịt lợn quay",
+    # "bò xông khói". Đặt SAU nhánh RTC nên "nhồi sẵn"/"cuốn sẵn" vẫn về RTC, không lẫn sang đây.
+    r"nhồi|bọc|quay|xông khói)"
+)
+# Nền món / kiểu món — "bún bò huế", "cơm gà hải nam" không có động từ nấu nào ở trên.
+_RTC_NEN_MON = r"(bún|phở|mì|miến|nui|hủ tiếu|bánh canh|cháo|xôi|cơm|lẩu|canh|súp|soup|salad|chả|nem|bì)"
+
+
+def classify_rtc(s: str) -> str:
+    """Thực phẩm sơ chế / Ready-to-Cook.
+
+    THỨ TỰ NHÁNH CÓ CHỦ ĐÍCH — các nhánh sau đều chứa từ vựng của nhánh trước nếu đặt sai:
+      · Storage TRƯỚC RTC     — "thịt ướp sẵn để được bao lâu" có "ướp sẵn", nhưng nó là câu
+                                hỏi bảo quản, không phải nhu cầu mua hàng ướp sẵn.
+      · Recipe TRƯỚC RTC      — "cách làm thịt heo ướp sẵn" là người muốn TỰ ướp.
+      · MealPrep TRƯỚC Pricing — "… bao nhiêu calo" có chữ "bao nhiêu".
+      · Retailer TRƯỚC Buy    — "thực phẩm sơ chế bách hóa xanh" là dò đối thủ, không phải
+                                "mua ở đâu" chung.
+      · B2B TRƯỚC Buy/Pricing — tệp tổ chức mua theo hợp đồng, đắt hơn nhiều lần B2C.
+      · Dish CUỐI cùng        — chỉ khi không còn tín hiệu nào khác thì mới là "tên món trần",
+                                đó mới là thứ nuôi TOP 20 món nhu cầu cao / tăng nhanh.
+
+    CHƯA KIỂM TOÁN NGOÀI MẪU: bộ này viết trước mẻ đo đầu tiên nên mẫu regex dựa trên 3.308 seed
+    và 592 tên món thật, KHÔNG dựa trên gợi ý Suggest thật như classify_fruit. Bài học ngành trái
+    cây (khớp trong mẫu 96% nhưng sai 25% ngoài mẫu) áp dụng y nguyên: phải rút mẫu kiểm tay sau
+    mẻ đầu rồi sửa lại, đừng tin số phân bố của tuần 1.
+    """
+    t = _rtc_norm(s)
+    if re.search(r"(đồng khởi|thành gia định|mộc an)", t):
+        return "Brand"
+
+    # Chuỗi bán lẻ — 20 nhà bán lẻ của bộ RTC. Dò đối thủ, không phải cầu danh mục.
+    if re.search(r"(bách hóa xanh|bachhoaxanh|winmart|vinmart|co ?op ?mart|co\.opmart|aeon|"
+                 r"lotte|kingfood|king food|homefarm|home farm|mm mega|metro|3sach|3 sạch|"
+                 r"farmers ?market|annam|cp brand|cp việt nam|satra|emart|big ?c|go ?!|tops market)", t):
+        return "Retailer"
+
+    # Bảo quản / an toàn — câu hỏi sống-chết của RTC. Phải bắt trước RTC và trước Pricing.
+    # Nhóm "hỏng ra sao" (bị đen, bị nhớt, ăn được không) lấy từ gợi ý THẬT trong kho đo 22/09:
+    # "khoai tây cắt sẵn bị đen có ăn được không", "khoai tây cắt sẵn bỏ tủ lạnh được không" —
+    # chúng vốn rơi vào RTC vì chỉ có marker "cắt sẵn", trong khi ý định là lo hàng hỏng.
+    if re.search(r"(bảo quản|để được bao lâu|được bao lâu|để tủ lạnh|bỏ tủ lạnh|tủ lạnh|tủ đá|"
+                 r"mấy ngày|bao nhiêu ngày|hạn sử dụng|hết hạn|rã đông|mất chất|"
+                 r"an toàn không|có tốt không|có sao không|độc không|ăn được không|dùng được không|"
+                 r"được không|tươi không|bị đen|bị thâm|bị nhớt|bị ủng|có mùi|ôi|hư|thối)", t):
+        return "Storage"
+
+    # Công thức — TÍN HIỆU R&D, không phải nhiễu (bài học ngành chay). Nuôi view
+    # "món nào nên đưa vào menu thử nghiệm": người tìm cách làm là người muốn ăn món đó.
+    if re.search(r"(cách làm|cách nấu|cách ướp|cách chế biến|công thức|hướng dẫn|tự làm|tự nấu|"
+                 r"làm như thế nào|nấu như thế nào|làm sao|làm từ gì|nấu với gì|ướp gì|"
+                 r"ướp như thế nào|ngon nhất|bí quyết)", t):
+        return "Recipe"
+
+    # Meal prep / healthy — tuyến Mia Meal Prep. Trước Pricing vì "bao nhiêu calo".
+    if re.search(r"(meal ?prep|eat ?clean|healthy|calo|kcal|dinh dưỡng|giảm cân|tăng cơ|gym|"
+                 r"gạo lứt|low ?carb|keto|protein|đủ chất|ăn sạch|cả tuần|7 ngày)", t):
+        return "MealPrep"
+
+    # B2B / HORECA — 384 dòng B2B của bộ RTC đều là P0.
+    if re.search(r"(sỉ\b|bỏ sỉ|giá sỉ|horeca|nhà cung cấp|cung cấp|nhà hàng|quán ăn|khách sạn|"
+                 r"bếp ăn|căn tin|canteen|suất ăn công nghiệp|trường học|công ty|chuỗi|"
+                 r"gia công|xưởng|nhà máy|đại lý|nguồn hàng|số lượng lớn|hợp đồng|"
+                 r"hóa đơn|vat|theo yêu cầu)", t):
+        return "B2B"
+
+    # Trạng thái sơ chế — LÕI của ngành: cùng một món, sơ chế tới đâu thì người ta mua.
+    if re.search(r"(sơ chế|chế biến sẵn|nấu sẵn|làm sẵn|ướp sẵn|tẩm ướp|cắt sẵn|gọt sẵn|rửa sẵn|"
+                 r"bóc vỏ|băm sẵn|xay sẵn|nhồi sẵn|thái sẵn|chia phần|cắt miếng|cắt khúc|cắt hạt lựu|"
+                 r"cắt lúc lắc|thái lát|thái sợi|phi lê|rút xương|rút chỉ|làm sạch|hút chân không|"
+                 r"đông lạnh|cấp đông|ready ?to ?cook|meal ?kit|chỉ việc nấu|ăn liền|tiện lợi)", t):
+        return "RTC"
+
+    # Giá — sau MealPrep (calo) và B2B (giá sỉ)
+    if re.search(r"(giá|bao nhiêu tiền|bao nhiêu một|bao nhiêu 1|bảng giá|báo giá|rẻ|"
+                 r"khuyến mãi|giảm giá|combo)", t):
+        return "Pricing"
+
+    # Mua ở đâu — bán lẻ B2C. Sau Retailer để tên chuỗi không rơi vào đây.
+    if re.search(r"(mua ở đâu|bán ở đâu|chỗ mua|chỗ bán|nơi bán|nơi mua|đặt mua|mua|bán|"
+                 r"siêu thị|cửa hàng|tạp hóa|store|shop)", t):
+        return "Buy"
+
+    if re.search(r"(giao|ship|tận nơi|tận nhà|online|app\b|đặt hàng|đặt\b|mang về)", t):
+        return "Delivery"
+
+    if re.search(r"(quận|phường|huyện|gần đây|gần nhất|tphcm|tp hcm|hồ chí minh|sài gòn|saigon|"
+                 r"thủ đức|bình thạnh|tân bình|tân phú|phú nhuận|gò vấp|bình tân|hóc môn|củ chi|"
+                 r"nhà bè|bình chánh|hà nội|đà nẵng|thảo điền|phú mỹ hưng)", t):
+        return "Local"
+
+    # TÊN MÓN TRẦN — nuôi TOP 20 món nhu cầu cao nhất / tăng nhanh nhất.
+    # Đặt cuối: chỉ nhận là món khi không còn tín hiệu thương mại/kỹ thuật nào khác.
+    if re.search(_RTC_CACH_NAU, t) or re.search(_RTC_NEN_MON, t):
+        return "Dish"
+
+    if re.search(r"(thực phẩm|thức ăn|đồ ăn|món ăn|nguyên liệu|thịt|cá|gà|bò|heo|tôm|mực|rau|"
+                 r"củ|trứng|đậu hũ|nấm)", t):
+        return "Core"
+    return "Other"
+
+
+def rtc_is_negative(s: str) -> bool:
+    """Loại nhiễu ngành RTC. Năm nhóm, đều đoán được từ chính chữ "sơ chế" — nó là thuật ngữ
+    dùng chung cho mọi ngành chế biến nông sản, không riêng thực phẩm cho bếp gia đình:
+
+      1) SƠ CHẾ NGÀNH KHÁC — sơ chế cà phê / cao su / dược liệu / hạt điều / thuốc lá / chè:
+         đúng chữ, sai hoàn toàn thị trường.
+      2) THIẾT BỊ — máy sơ chế, dây chuyền, tủ đông, máy hút chân không: người mua MÁY.
+         (câu hỏi bảo quản dùng chữ "bảo quản/để được bao lâu" → vẫn vào Storage, không lọt đây)
+      3) THỨC ĂN VẬT NUÔI — thức ăn cho chó/mèo, pate mèo, hạt cho chó.
+      4) TRỒNG TRỌT / CHĂN NUÔI — hạt giống, cách trồng, thức ăn chăn nuôi, con giống.
+      5) VIỆC LÀM + GIẢI TRÍ + HỌC THUẬT — tuyển dụng, phim, game, luận văn, tiếng anh là gì.
+
+    KHÔNG lọc (có chủ đích): "cách làm/công thức" (→ Recipe, tín hiệu R&D), siêu thị và tên chuỗi
+    (→ Retailer, dò đối thủ), "quy trình sơ chế" và "hóa đơn/vat" (→ B2B, bếp ăn đang mua và cần
+    tuân thủ), "có tốt không/an toàn không" (→ Storage, đó là hàng rào tin cậy phải trả lời).
+    """
+    t = _rtc_norm(s)
+    return bool(re.search(
+        r"(sơ chế cà phê|cà phê sơ chế|sơ chế cao su|mủ cao su|sơ chế dược liệu|dược liệu|"
+        r"sơ chế hạt điều|sơ chế thuốc lá|sơ chế chè|sơ chế trà|sơ chế tổ yến|sơ chế quặng|"
+        r"sơ chế mủ|sơ chế gỗ|"
+        # TRÁI CÂY có radar riêng (ngành `fruit`, 3.150 gợi ý) — không đo lại ở RTC để khỏi đếm
+        # hai lần. Đo 22/09: "hộp trái cây cắt sẵn", "cửa hàng trái cây cắt sẵn" và cả tên quán
+        # trên Maps "morning fruit … trái cây cắt sẵn" đều rơi vào RTC nếu không cắt ở đây.
+        r"trái cây|hoa quả|"
+        r"máy sơ chế|máy cắt thịt|máy xay thịt|máy thái|máy hút chân không|dây chuyền|"
+        # KHÔNG lọc "tủ đông/tủ mát" trần: "khoai tây cắt sẵn bỏ tủ lạnh được không" và
+        # "đồ ăn cấp đông để tủ đông được bao lâu" là câu hỏi BẢO QUẢN (→ Storage), không phải
+        # người mua tủ. Chỉ lọc thiết bị thương mại, thứ không ai hỏi khi đang lo hàng hỏng.
+        r"tủ cấp đông|kho lạnh|thiết bị bếp|dụng cụ|khay đựng|"
+        # Nồi/chảo phải có ngữ cảnh ĐỒ GIA DỤNG: "chảo" trần sẽ ăn luôn "áp chảo" — một cách
+        # nấu, và là cách nấu của cả tuyến healthy "cơm gạo lứt ức gà áp chảo" (DKC-RTC-008).
+        r"nồi chiên không dầu|nồi áp suất|nồi cơm điện|bộ nồi|chảo chống dính|chảo gang|"
+        r"thức ăn cho chó|thức ăn cho mèo|thức ăn chó|thức ăn mèo|pate mèo|pate chó|hạt cho chó|"
+        r"cho gà đẻ|thức ăn chăn nuôi|cám|"
+        r"hạt giống|cách trồng|kỹ thuật trồng|phân bón|con giống|chăn nuôi|"
+        r"tuyển dụng|việc làm|thực tập|mức lương|tuyển thợ|"
+        r"phim|truyện|game|lời bài hát|karaoke|"
+        r"luận văn|tiểu luận|đồ án|giáo trình|tiếng anh là gì|dịch sang)", t))
+
+
 CLASSIFIERS = {"food": classify_food, "realestate": classify_realestate, "hotel": classify_hotel,
                "water": classify_water, "produce": classify_produce, "vegetarian": classify_vegetarian,
-               "fruit": classify_fruit}
+               "fruit": classify_fruit, "rtc": classify_rtc}
 NEGATIVE = {"realestate": re_is_negative, "water": water_is_negative, "produce": produce_is_negative,
-            "vegetarian": vegetarian_is_negative, "fruit": fruit_is_negative}
+            "vegetarian": vegetarian_is_negative, "fruit": fruit_is_negative,
+            "rtc": rtc_is_negative}
